@@ -1,0 +1,37 @@
+<resources>
+    <string name="app_name">Mephi_app</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="menu_home">Главная</string>
+    <string name="menu_gallery">Gallery</string>
+    <string name="menu_slideshow">Slideshow</string>
+    <string name="menu_tools">Tools</string>
+    <string name="menu_share">Share</string>
+    <string name="menu_send">Send</string>
+    <string name="app_name_rus">Путеводитель по НИЯУ МИФИ</string>
+    <string name="app_version">1.0</string>
+    <string name="menu_remind">Памятка первокурсника</string>
+    <string name="menu_navigation">Навигация</string>
+    <string name="menu_qr">Сканировать QR</string>
+    <string name="menu_settings">Параметры</string>
+    <string name="TextView2">Выбрать группу</string>
+
+    <string name="web_start">
+        <![CDATA[
+        <html>
+        <head></head>
+        <body style="text-align:justify;color:black;background-color:rgba(255, 255, 255, 0);">
+        ]]>
+        </string>
+    <string name="web_end">
+        <![CDATA[
+        </body>
+        </html>
+        ]]>
+    </string>
+</resources>
