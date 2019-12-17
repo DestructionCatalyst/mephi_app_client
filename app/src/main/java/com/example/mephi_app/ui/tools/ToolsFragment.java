@@ -1,6 +1,8 @@
 package com.example.mephi_app.ui.tools;
 
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -67,6 +69,26 @@ public class ToolsFragment extends Fragment {
                         .setTitle("О программе");
                 AlertDialog dialog1 = builder1.create();
                 dialog1.show();
+            }
+        });
+
+        final TextView sup = root.findViewById(R.id.support);
+        sup.setText("Техподдержка");
+        sup.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try
+                {
+                    Intent contactintent = new Intent(Intent.ACTION_SENDTO); // экшн без вложений
+                    contactintent.setData(android.net.Uri.parse("mailto:" + "mephiapp@gmail.com"));
+
+                    startActivity(contactintent);
+
+                }
+                catch (ActivityNotFoundException anfe)
+                {
+                    Toast.makeText(ma, "На устройстве не найден почтовый клиент", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 

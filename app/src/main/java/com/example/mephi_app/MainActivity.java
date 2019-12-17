@@ -127,15 +127,15 @@ public class MainActivity extends AppCompatActivity {
         }
         catch (NullPointerException e){}
         try{
-            flag = HomeFragment.Back2Bizniz();
+            flag = flag|HomeFragment.Back2Bizniz();
         }
         catch (NullPointerException ex){}
         if (showingQR){
-            flag = true;
+            flag = flag|true;
             SendFragment.closeQR();
             showingQR = false;
         }
-           if (!flag)finish();
+           if (!flag)killApp();
     }
 
     protected void onRestoreInstanceState(Bundle savedInstanceState) {

@@ -103,7 +103,7 @@ public class SlideshowFragment extends Fragment {
                 int [] way = findaway(from-1,to-1);
                 if(way != null) {
                     String wayStr = "";
-                    if (way[0]==way[1]){
+                    if (from == to){
                         points.add(dots.get(from - 1).x-3);
                         points.add(dots.get(from - 1).y-3);
                         points.add(dots.get(from - 1).x+3);

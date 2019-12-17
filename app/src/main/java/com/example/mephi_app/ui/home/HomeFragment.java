@@ -132,6 +132,7 @@ public class HomeFragment extends Fragment {
             dialog1.show();*/
 
             newsArrayList = new ArrayList<>();
+           // if (content == null)ma.killApp();
 
             // adapter = new ArrayAdapter<>(this.getActivity(), android.R.layout.simple_list_item_1, reminders);
             //listView.setAdapter(adapter);
@@ -160,7 +161,7 @@ public class HomeFragment extends Fragment {
             }
             catch(Exception e){
                 e.printStackTrace();
-                return "Error\n"+e.getMessage();
+                return null;
             }
             finally {
                 if (reader != null) {
@@ -175,6 +176,12 @@ public class HomeFragment extends Fragment {
         newsArrayList = JSONHelper.importFromJSON(this.getActivity(), jsonStr);
         if(newsArrayList!=null){
             //Toast.makeText(this, "Данные восстановлены", Toast.LENGTH_LONG).show();
+            news tmp;
+            for (int i = 0; i<newsArrayList.size()/2; i++){
+                tmp = newsArrayList.get(i);
+                newsArrayList.set(i, newsArrayList.get(newsArrayList.size()-1-i));
+                newsArrayList.set(newsArrayList.size()-1-i, tmp);
+            }
             adapter1 = new MyAdapter(this.getActivity(), this,newsArrayList);
             listView.setAdapter(adapter1);
 
@@ -188,7 +195,7 @@ public class HomeFragment extends Fragment {
 
 
             AlertDialog dialog1 = builder1.create();
-            dialog1.show();
+            //dialog1.show();
         }
 
     }
