@@ -234,7 +234,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     public void open(String jsonStr){
-        groups = JSONHelper.importFromJSON(this, jsonStr);
+        GroupsJSONHelper helper = new GroupsJSONHelper();
+        groups = helper.importFromJSON(jsonStr);
         try{
         groups.add(0,(new group(0,"(Гость)",0)));
         readFile();

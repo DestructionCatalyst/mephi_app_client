@@ -1,15 +1,13 @@
 package com.example.mephi_app;
 
-import android.content.Context;
-
-import com.example.mephi_app.group;
+import com.example.mephi_app.ui.JSONStrategy;
 import com.google.gson.Gson;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class JSONHelper {
-
-    public static ArrayList<group> importFromJSON(Context context, String jsonString) {
+public class GroupsJSONHelper implements JSONStrategy {
+    public ArrayList<group> importFromJSON(String jsonString) {
 
         ArrayList<group> groups;
         try{
@@ -20,10 +18,6 @@ public class JSONHelper {
         catch (Exception ex){
             ex.printStackTrace();
         }
-        finally {
-
-        }
-
         return null;
     }
 

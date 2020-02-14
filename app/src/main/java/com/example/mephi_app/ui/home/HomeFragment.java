@@ -175,7 +175,8 @@ public class HomeFragment extends Fragment {
     }
 
     private void openJSON(String jsonStr){
-        newsArrayList = JSONHelper.importFromJSON(this.getActivity(), jsonStr);
+        NewsJSONHelper helper= new NewsJSONHelper();
+        newsArrayList = helper.importFromJSON(jsonStr);
         if(newsArrayList!=null){
             //Toast.makeText(this, "Данные восстановлены", Toast.LENGTH_LONG).show();
             news tmp;

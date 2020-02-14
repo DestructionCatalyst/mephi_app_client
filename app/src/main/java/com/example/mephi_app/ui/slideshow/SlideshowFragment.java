@@ -191,7 +191,8 @@ public class SlideshowFragment extends Fragment {
                 openJSON(JSONString);
             }
             else {
-                ways = JSONHelper.importWaysFromJSON(ma, JSONString);
+                WayJSONHelper helper = new WayJSONHelper();
+                ways = helper.importFromJSON(JSONString);
                 //Toast.makeText(ma, ways.get(0).toString(), Toast.LENGTH_LONG).show();
                 makeTable();
             }
@@ -231,7 +232,8 @@ public class SlideshowFragment extends Fragment {
     }
 
     private void openJSON(String jsonStr){
-        dots = JSONHelper.importFromJSON(this.getActivity(), jsonStr);
+        DotJSONHelper helper = new DotJSONHelper();
+        dots = helper.importFromJSON(jsonStr);
         if(dots!=null){
             //Toast.makeText(this, "Данные восстановлены", Toast.LENGTH_LONG).show();
             for (int i = 0; i<dots.size(); i++){

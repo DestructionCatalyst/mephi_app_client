@@ -176,7 +176,8 @@ public class GalleryFragment extends Fragment {
         }
     }
     public void open(String jsonStr){
-        reminders = JSONHelper.importFromJSON(this.getActivity(), jsonStr);
+        ReminderJSONHelper helper = new ReminderJSONHelper();
+        reminders = helper.importFromJSON(jsonStr);
         if(reminders!=null){
 
 
@@ -184,7 +185,7 @@ public class GalleryFragment extends Fragment {
 
             try {
                 FileInputStream fin = ma.openFileInput(FILE_NAME);
-                byte [] b = new byte[fin.available()];//Непонятная хня
+                byte [] b = new byte[fin.available()];
                 fin.read(b);
                 String read = new String (b);
                 //Toast.makeText(ma, "Загружена строка: "+read, Toast.LENGTH_SHORT).show();

@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +24,7 @@ import androidx.lifecycle.ViewModelProviders;
 
 import com.example.mephi_app.MainActivity;
 import com.example.mephi_app.R;
+import com.example.mephi_app.ui.IOpensJson;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -33,7 +35,7 @@ import java.net.URLEncoder;
 
 import static android.app.Activity.RESULT_OK;
 
-public class SendFragment extends Fragment {
+public class SendFragment extends Fragment implements IOpensJson {
 
     private SendViewModel sendViewModel;
     MainActivity ma;
@@ -41,7 +43,6 @@ public class SendFragment extends Fragment {
     qr info;
     static WebView wv;
     static TextView tv;
-    String ssylka_v_sibir;
     String contents;
     //boolean qrcorrect;
 
@@ -216,7 +217,8 @@ public class SendFragment extends Fragment {
         }
     }
     public void open(String jsonStr){
-        info = JSONHelper.importFromJSON(this.getActivity(), jsonStr);
+        QrJSONHelper helper = new QrJSONHelper();
+        info = helper.importFromJSON(jsonStr).get(0);
         ma.showingQR = true;
         butt.setVisibility(View.GONE);
 
@@ -233,6 +235,18 @@ public class SendFragment extends Fragment {
         }
 
     }
+
+    @Override
+    public void swear(String swearing) {
+        String fullSwearing = "Ошибка открытия QR-кода. "+swearing;
+        Log.d("Connection", fullSwearing);
+        AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
+        builder1.setMessage(fullSwearing)
+                .setTitle("Ошибка!");
+        AlertDialog dialog1 = builder1.create();
+        dialog1.show();
+    }
+
     public static void closeQR(){
         wv.setVisibility(View.GONE);
         wv.loadData("", "text/html; charset=utf-8", "utf-8");

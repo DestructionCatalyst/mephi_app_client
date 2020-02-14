@@ -1,17 +1,15 @@
 package com.example.mephi_app.ui.home;
 
-import android.content.Context;
-
-import com.example.mephi_app.ui.gallery.reminder;
+import com.example.mephi_app.ui.JSONStrategy;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class JSONHelper {
+public class NewsJSONHelper implements JSONStrategy {
 
-    static ArrayList<news> importFromJSON(Context context, String jsonString) {
-
+    public ArrayList<news> importFromJSON(String jsonString)
+    {
         ArrayList<news> newss;
         try{
             Gson gson = new Gson();
@@ -21,10 +19,6 @@ public class JSONHelper {
         catch (Exception ex){
             ex.printStackTrace();
         }
-        finally {
-
-        }
-
         return null;
     }
 
