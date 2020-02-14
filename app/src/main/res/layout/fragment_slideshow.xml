@@ -16,7 +16,7 @@
             android:id="@+id/auto_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:completionThreshold="1"
+            android:completionThreshold="0"
             android:hint="Откуда..."
 
             android:singleLine="true"/>
@@ -24,7 +24,7 @@
             android:id="@+id/auto_text1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:completionThreshold="1"
+            android:completionThreshold="0"
             android:hint="Куда..."
 
             android:singleLine="true"/>

@@ -3,6 +3,7 @@ package com.example.mephi_app.ui.gallery;
 import android.app.AlertDialog;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -92,6 +93,7 @@ public class GalleryFragment extends Fragment {
 
         ProgressTask task = new ProgressTask();
         task.execute(ma.lnkbase+lnkpost);
+        Log.d("Link",ma.lnkbase+lnkpost);
         //LinearLayout lin =(LinearLayout) root.findViewById(R.id.linlay);
         //lin.setVisibility(View.GONE);
 
@@ -110,7 +112,7 @@ public class GalleryFragment extends Fragment {
 
 
     private class ProgressTask extends AsyncTask<String, Void, String> {
-        //@Override
+        @Override
         protected String doInBackground(String... path) {
 
             String content;
@@ -124,7 +126,7 @@ public class GalleryFragment extends Fragment {
             //JSONString = content;
             return content;
         }
-        //@Override
+        @Override
         protected void onPostExecute(String content) {
             JSONString = content;
             /*AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
@@ -149,7 +151,8 @@ public class GalleryFragment extends Fragment {
                 URL url=new URL(path);
                 HttpURLConnection c=(HttpURLConnection)url.openConnection();
                 c.setRequestMethod("GET");
-                c.setReadTimeout(10000);
+                c.setConnectTimeout(30000);
+                c.setReadTimeout(50000);
                 c.connect();
                 reader= new BufferedReader(new InputStreamReader(c.getInputStream()));
                 StringBuilder buf=new StringBuilder();

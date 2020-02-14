@@ -191,7 +191,8 @@ public class SendFragment extends Fragment {
                 //ssylka_v_sibir = URLString;
                 HttpURLConnection c=(HttpURLConnection)url.openConnection();
                 c.setRequestMethod("GET");
-                c.setReadTimeout(10000);
+                c.setConnectTimeout(30000);
+                c.setReadTimeout(50000);
                 c.connect();
                 reader= new BufferedReader(new InputStreamReader(c.getInputStream()));
                 StringBuilder buf=new StringBuilder();

@@ -144,6 +144,15 @@ public class SlideshowFragment extends Fragment {
                     gfx.MyInvalidate(floatArray);
                     ma.hideKeyboard();
                 }
+                else {
+                    AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
+                    builder1.setMessage("Неверно указана начальная и/или конечная точка!")
+                            .setTitle("Ошибка!")
+                            .setPositiveButton("ОК", null);
+
+                    AlertDialog dialog1 = builder1.create();
+                    dialog1.show();
+                }
             }
         });
 
@@ -196,7 +205,8 @@ public class SlideshowFragment extends Fragment {
                 URL url=new URL(path);
                 HttpURLConnection c=(HttpURLConnection)url.openConnection();
                 c.setRequestMethod("GET");
-                c.setReadTimeout(10000);
+                c.setConnectTimeout(30000);
+                c.setReadTimeout(50000);
                 c.connect();
                 reader= new BufferedReader(new InputStreamReader(c.getInputStream()));
                 StringBuilder buf=new StringBuilder();
@@ -277,15 +287,16 @@ public class SlideshowFragment extends Fragment {
     }
 
     private int [] findaway(int from, int to){
-        if (from == to){
+        Log.d("Pathfinder", "from = "+from+" , to = "+to);
+        if ((from < 0)||(to < 0)){
+            Log.d("Pathfinder", "В Саратовской области найден таинственный автобус, едущий в никуда");
+            return null;
+        }
+        else if (from == to){
             int [] arr = new int[2];
             arr[0] = from;
             arr[1] = to;
             return arr;
-        }
-        if ((from < 0)||(to < 0)){
-            Log.e("Pathfinder", "В Саратовской области найден таинственный автобус, едущий в никуда");
-            return null;
         }
         else{
             int unfin = dotn;

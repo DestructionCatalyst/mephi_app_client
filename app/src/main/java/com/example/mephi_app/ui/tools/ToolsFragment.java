@@ -79,7 +79,7 @@ public class ToolsFragment extends Fragment {
             public void onClick(View v) {
                 try
                 {
-                    Intent contactintent = new Intent(Intent.ACTION_SENDTO); // экшн без вложений
+                    Intent contactintent = new Intent(Intent.ACTION_SENDTO);
                     contactintent.setData(android.net.Uri.parse("mailto:" + "mephiapp@gmail.com"));
 
                     startActivity(contactintent);

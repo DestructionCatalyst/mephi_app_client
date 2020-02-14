@@ -47,15 +47,15 @@ public class HomeFragment extends Fragment {
     private String JSONString;
     //private  String lnk = "http://192.168.1.7:3000/home/getnews/?inst=";
     private String lnkpost = "getnews?inst=";
-    static Switch sw;
+    public static Switch sw;
     static String FILE_NAME = "group";
     private static ArrayAdapter adapter;
     private MyAdapter adapter1;
     private static TextView text;
-    static ListView listView;
+    public static ListView listView;
     static LinearLayout ll;
     public static WebView wv;
-    static boolean ne_lez=false;
+    public static boolean ne_lez=false;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -107,6 +107,7 @@ public class HomeFragment extends Fragment {
     }
 
 
+
     private class ProgressTask extends AsyncTask<String, Void, String>{
         //@Override
         protected String doInBackground(String... path) {
@@ -148,7 +149,8 @@ public class HomeFragment extends Fragment {
                 URL url=new URL(path);
                 HttpURLConnection c=(HttpURLConnection)url.openConnection();
                 c.setRequestMethod("GET");
-                c.setReadTimeout(10000);
+                c.setConnectTimeout(30000);
+                c.setReadTimeout(50000);
                 c.connect();
                 reader= new BufferedReader(new InputStreamReader(c.getInputStream()));
                 StringBuilder buf=new StringBuilder();

@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -41,12 +42,14 @@ public class MainActivity extends AppCompatActivity {
     String JSONString;
     public ArrayList<group> groups;
     //private String lnk="http://192.168.1.7:3000/home/getgroups/";
-    public String lnkbase="http://192.168.1.7:3000/home/";
+    public String lnkbase="http://194.87.232.95:45555/home/";
     private String lnkpost="getgroups/";
     private String FILE_NAME = "group";
     public boolean firstLaunch = false;
     private FragmentManager myFragmentManager;
     public boolean showingQR;
+    ProgressTask task = new ProgressTask();
+    ProgressTask tsk = new ProgressTask();
 
 
     @Override
@@ -83,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
 
-        ProgressTask task = new ProgressTask();
+        //ProgressTask task = new ProgressTask();
         task.execute(lnkbase+lnkpost);
 
     }
@@ -154,11 +157,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private class ProgressTask extends AsyncTask<String, Void, String> {
-        //@Override
+        @Override
+        protected void onPreExecute(){
+            Log.d("Connection","Пошла моча по трубам!");
+        }
+        @Override
         protected String doInBackground(String... path) {
-
+            Log.d("Connection",path[0]);
             String content;
             try{
+
                 content = getContent(path[0]);
 
             }
@@ -168,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
             //JSONString = content;
             return content;
         }
-        //@Override
+        @Override
         protected void onPostExecute(String content) {
             JSONString = content;
             /*AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
@@ -178,8 +186,8 @@ public class MainActivity extends AppCompatActivity {
             dialog1.show();*/
 
             if (content == null)swearAndExit();
-
-
+            if (content.startsWith("Error!\n"))swear2(content);
+            Log.d("Connection",""+content);
             groups = new ArrayList<>();
 
             open(JSONString);
@@ -193,20 +201,29 @@ public class MainActivity extends AppCompatActivity {
                 URL url=new URL(path);
                 HttpURLConnection c=(HttpURLConnection)url.openConnection();
                 c.setRequestMethod("GET");
-                c.setReadTimeout(5000);
+                c.setConnectTimeout(30000);
+                c.setReadTimeout(50000);
                 c.connect();
                 reader= new BufferedReader(new InputStreamReader(c.getInputStream()));
                 StringBuilder buf=new StringBuilder();
                 String line=null;
-                while ((line=reader.readLine()) != null) {
+                /*while ((line=reader.readLine()) != null) {
                     buf.append(line + "\n");
                 }
-                return(buf.toString());
+                return(buf.toString());*/
+                line = reader.readLine();
+                return line;
                 //return reader.readLine();
             }
             catch(Exception e){
-
-                return null;
+                e.printStackTrace();
+                StackTraceElement [] err = e.getStackTrace();
+                //Log.d("Connection","-------------------"+e.getMessage());
+                String tmp=e.getMessage()+"\n";
+                for (int i = 0;i<err.length;i++){
+                    tmp+=err[i]+"\n   ";
+                }
+                return "Error!\n"+tmp;
             }
             finally {
                 if (reader != null) {
@@ -270,9 +287,9 @@ public class MainActivity extends AppCompatActivity {
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(getWindow().getDecorView().getWindowToken(), 0);
     }
-    private void swearAndExit(){
+    private void swear2(String error){
         AlertDialog.Builder builder1 = new AlertDialog.Builder(this);
-        builder1.setMessage("Нет подключения к серверу. Проверьте, подключено ли ваше устройство к мобильной или WI-Fi сети.")
+        builder1.setMessage("Произошла ошибка подключения\n"+error)
                 .setTitle("Проверьте подключение к Интернету")
                 .setCancelable(false)
                 .setNegativeButton("Выход",
@@ -284,8 +301,70 @@ public class MainActivity extends AppCompatActivity {
                         });
         AlertDialog dialog1 = builder1.create();
         dialog1.show();
+    }
+    private void swearAndExit(){
+        AlertDialog.Builder builder1 = new AlertDialog.Builder(this);
+        builder1.setMessage("Нет подключения к серверу. Проверьте, подключено ли ваше устройство к мобильной или WI-Fi сети.\n" +
+                "Если Вы уверены, что подключены к Интернету и знаете адрес сервера, то Вы можете ввести его вручную")
+                .setTitle("Проверьте подключение к Интернету")
+                .setCancelable(false)
+                .setPositiveButton("Указать адрес сервера", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        setLnkbase();
+                    }
+                })
+                .setNegativeButton("Выход",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                                killApp();
+                            }
+                        });
+        AlertDialog dialog1 = builder1.create();
+        dialog1.show();
         //finish();
     }
+
+    private void setLnkbase(){
+
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+        alert.setTitle("Введите адрес сервера");
+        alert.setMessage("Введите IP-адрес сервера или ссылку на него в формате example.com (Если подключение защищённое, сначала введите https://)");
+
+        final EditText input = new EditText(this);
+        alert.setView(input);
+
+        alert.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                String value = input.getText().toString();
+                String [] parsed = value.split("://");
+                if (parsed [0].equals("https")){lnkbase = "https://"+parsed[1]+"/home/";}
+                else if (parsed [0].equals("http")){lnkbase = "http://"+parsed[1]+"/home/";}
+                else {lnkbase = "http://"+parsed[0]+"/home/";}
+                Log.d("Link",lnkbase+lnkpost);
+                //ProgressTask tsk = new ProgressTask();
+                tsk.execute(lnkbase+lnkpost);
+                //boolean ch = HomeFragment.sw.isChecked();
+                //HomeFragment.listView.setVisibility(View.INVISIBLE);
+                HomeFragment.ne_lez = true;
+                HomeFragment.sw.setChecked(true);
+                HomeFragment.ne_lez = false;
+                HomeFragment.sw.setChecked(false);
+            }
+        });
+
+        alert.setNegativeButton("Выход", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                killApp();
+            }
+        });
+
+        alert.show();
+
+
+    }
+
     private void killApp(){
         try {
             Thread.sleep(1000);
