@@ -71,7 +71,7 @@ public class NetworkTask extends AsyncTask<String, Void, String> {
     @Override
     protected void onPostExecute(String content) {
         super.onPreExecute();
-        if (content.startsWith("[{")){
+        if (content.startsWith("[")){
             //Открываем
             Log.d("Connection","Got JSON from the server");
             context.open(content);

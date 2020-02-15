@@ -46,7 +46,7 @@ public class HomeFragment extends Fragment implements IOpensJson {
     private static MainActivity ma;
 
     private static Spinner spinner;
-    public static Switch sw;
+    private static Switch sw;
     private static TextView text;
     private static ListView listView;
     private static LinearLayout ll;
@@ -57,8 +57,6 @@ public class HomeFragment extends Fragment implements IOpensJson {
 
     private static ArrayAdapter groupAdapter;
     private MyAdapter newsAdapter;
-
-    public static boolean ne_lez=false;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -95,13 +93,55 @@ public class HomeFragment extends Fragment implements IOpensJson {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     if (sw.getVisibility() == View.VISIBLE) {
-                        if (!ne_lez) refresh(isChecked);
+                        refresh(isChecked);
                     }
                     else refresh(false);
                     }
                  }
             );
         }
+
+        AdapterView.OnItemSelectedListener itemSelectedListener = new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+
+                ma.curGroup = (group)parent.getItemAtPosition(position);
+                FileOutputStream fos;
+
+                try {
+                    fos = ma.openFileOutput(FILE_NAME, MODE_PRIVATE);
+                    String write = "";
+                    write = ma.curGroup.name;
+                    fos.write(write.getBytes());
+                    fos.close();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Toast.makeText(ma, "Ошибка сохранения данных!", Toast.LENGTH_SHORT).show();
+                }
+                if (ma.curGroup.idInst == 0){
+                    sw.setChecked(false);
+                    sw.setVisibility(View.INVISIBLE);
+                    text.setVisibility(View.INVISIBLE);
+
+                }
+                else {
+                    listView.setVisibility(View.INVISIBLE);
+                    refresh(sw.isChecked());
+                    listView.setVisibility(View.VISIBLE);
+                    sw.setVisibility(View.VISIBLE);
+                    text.setVisibility(View.VISIBLE);
+                }
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        };
+        spinner.setOnItemSelectedListener(itemSelectedListener);
 
         NetworkTask task1 = new NetworkTask(this);
         task1.execute(ma.lnkbase+lnkpost+"0");
@@ -152,58 +192,8 @@ public class HomeFragment extends Fragment implements IOpensJson {
             groupAdapter.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
             spinner.setAdapter(groupAdapter);
             spinner.setSelection(ma.curGroup.id);
-
-            AdapterView.OnItemSelectedListener itemSelectedListener = new AdapterView.OnItemSelectedListener() {
-                @Override
-                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-
-                    ma.curGroup = (group)parent.getItemAtPosition(position);
-                    FileOutputStream fos;
-
-                    try {
-                        fos = ma.openFileOutput(FILE_NAME, MODE_PRIVATE);
-                        String write = "";
-                        write = ma.curGroup.name;
-                        fos.write(write.getBytes());
-                        fos.close();
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        Toast.makeText(ma, "Ошибка сохранения данных!", Toast.LENGTH_SHORT).show();
-                    }
-                    if (ma.curGroup.idInst == 0){
-                        sw.setChecked(false);
-                        sw.setVisibility(View.INVISIBLE);
-                        text.setVisibility(View.INVISIBLE);
-
-                    }
-                    else {
-                        boolean ch = sw.isChecked();
-                        listView.setVisibility(View.INVISIBLE);
-                        ne_lez = true;
-                        sw.setChecked(false);
-                        ne_lez = false;
-                        sw.setChecked(ch);
-
-                        listView.setVisibility(View.VISIBLE);
-                        sw.setVisibility(View.VISIBLE);
-                        text.setVisibility(View.VISIBLE);
-                    }
-
-                }
-
-                @Override
-                public void onNothingSelected(AdapterView<?> parent) {
-
-                }
-            };
-            spinner.setOnItemSelectedListener(itemSelectedListener);
-
-
         } catch (Exception e) {
             Toast.makeText(ma, "Проверьте соединение с Интернетом!",Toast.LENGTH_SHORT).show();
-            //e.printStackTrace();
         }
 
 

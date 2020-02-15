@@ -20,6 +20,8 @@ import androidx.lifecycle.ViewModelProviders;
 
 import com.example.mephi_app.MainActivity;
 import com.example.mephi_app.R;
+import com.example.mephi_app.ui.IOpensJson;
+import com.example.mephi_app.ui.NetworkTask;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -29,7 +31,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class SlideshowFragment extends Fragment {
+public class SlideshowFragment extends Fragment implements IOpensJson {
 
     private SlideshowViewModel slideshowViewModel;
     //Spinner spinner_from;
@@ -71,6 +73,8 @@ public class SlideshowFragment extends Fragment {
         buttoff = root.findViewById(R.id.button);
         textView = root.findViewById(R.id.textView6);
         gfx = root.findViewById(R.id.draw_field);
+
+        NetworkTask task2 = new NetworkTask(this);
 
         ProgressTask task = new ProgressTask();
         task.execute(ma.lnkbase+lnkpost);
@@ -157,6 +161,21 @@ public class SlideshowFragment extends Fragment {
         });
 
         return root;
+    }
+
+    @Override
+    public void open(String jsonStr) {
+
+    }
+
+    @Override
+    public void swear(String swearing) {
+
+    }
+
+    @Override
+    public void displayJson(ArrayList a) {
+
     }
 
     private class ProgressTask extends AsyncTask<String, Void, String> {

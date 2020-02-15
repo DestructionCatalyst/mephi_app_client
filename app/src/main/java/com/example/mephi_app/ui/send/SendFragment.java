@@ -6,7 +6,6 @@ import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -25,12 +24,10 @@ import androidx.lifecycle.ViewModelProviders;
 import com.example.mephi_app.MainActivity;
 import com.example.mephi_app.R;
 import com.example.mephi_app.ui.IOpensJson;
+import com.example.mephi_app.ui.JSONHelper;
+import com.example.mephi_app.ui.NetworkTask;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 
@@ -38,22 +35,21 @@ import static android.app.Activity.RESULT_OK;
 
 public class SendFragment extends Fragment implements IOpensJson {
 
-    private SendViewModel sendViewModel;
-    MainActivity ma;
-    static Button butt;
-    qr info;
-    static WebView wv;
-    static TextView tv;
-    String contents;
-    //boolean qrcorrect;
+    private final String lnk="http://192.168.1.7:3000/home/getqr?nam=";
+    private final String lnkpost = "getqr?nam=";
 
-    private String lnk="http://192.168.1.7:3000/home/getqr?nam=", JSONString;
-    private String lnkpost = "getqr?nam=";
+    private MainActivity ma;
+    private static Button butt;
+
+    private static WebView wv;
+    private static TextView tv;
+
+    private String contents;
+    private qr info;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        sendViewModel =
-                ViewModelProviders.of(this).get(SendViewModel.class);
+        SendViewModel sendViewModel = ViewModelProviders.of(this).get(SendViewModel.class);
         View root = inflater.inflate(R.layout.fragment_send, container, false);
         //final TextView textView = root.findViewById(R.id.text_send);
         sendViewModel.getText().observe(this, new Observer<String>() {
@@ -82,7 +78,7 @@ public class SendFragment extends Fragment implements IOpensJson {
 
 
     // Запуск сканера qr-кода:
-    public void scanQR(View v) {
+    private void scanQR(View v) {
         try {
 
             // Запускаем переход на com.google.zxing.client.android.SCAN с помощью intent:
@@ -129,112 +125,29 @@ public class SendFragment extends Fragment implements IOpensJson {
 
                 // Получаем данные после работы сканера и выводим их в Toast сообщении:
                 contents = intent.getStringExtra("SCAN_RESULT");
-                String format = intent.getStringExtra("SCAN_RESULT_FORMAT");
                 String prefix = contents.substring(0,contents.indexOf(' '));
-                ProgressTask task = new ProgressTask();
-                String fulllnk = ma.lnkbase+lnkpost+prefix;
+                try {
+                    prefix = URLEncoder.encode(prefix,"utf-8");
+                } catch (UnsupportedEncodingException e) {
+                    AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
+                    builder1.setMessage("Не удалось считать QR-код. Пожалуйста, попробуйте ещё раз.")
+                            .setTitle("QR-код");
+                    AlertDialog dialog1 = builder1.create();
+                    dialog1.show();
+                    e.printStackTrace();
+                }
+                NetworkTask task1 = new NetworkTask(this);
+                Log.d("Connection", "URL: ma.lnkbase+lnkpost+prefix");
+                task1.execute(ma.lnkbase+lnkpost+prefix);
 
-                task.execute(fulllnk);
-
-                //if (prefix.toCharArray()[0] == 'Г'){Toast toast = Toast.makeText(ma, "А нах", Toast.LENGTH_SHORT);toast.show();}
-                //Toast toast = Toast.makeText(ma, "Начало: " + prefix + " Формат: " + format, Toast.LENGTH_SHORT);
-                //toast.show();
             }
         }
     }
 
 
-    private class ProgressTask extends AsyncTask<String, Void, String> {
-        @Override
-        protected String doInBackground(String... path) {
-
-            String content;
-            try{
-                //Toast toast = Toast.makeText(ma, path[0], Toast.LENGTH_SHORT);
-                //toast.show();
-
-
-                content = getContent(path[0]);
-
-            }
-            catch (IOException ex){
-                content = ex.getMessage();
-            }
-            //JSONString = content;
-            return content;
-        }
-        @Override
-        protected void onPostExecute(String content) {
-            JSONString = content;
-            /*AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
-            builder1.setMessage(content)
-                    .setTitle("Content");
-            AlertDialog dialog1 = builder1.create();
-            dialog1.show();*/
-            //Toast toast = Toast.makeText(ma, ssylka_v_sibir, Toast.LENGTH_SHORT);
-            //toast.show();
-            //tv.setText(ssylka_v_sibir);
-            info = null;
-
-            // adapter = new ArrayAdapter<>(this.getActivity(), android.R.layout.simple_list_item_1, reminders);
-            //listView.setAdapter(adapter);
-
-            open(JSONString);
-
-
-        }
-
-        private String getContent(String path) throws IOException {
-            BufferedReader reader=null;
-            try {
-                String[] s = path.split("=");
-                String URLString = s[0]+"="+URLEncoder.encode(s[1],"utf-8");
-                URL url= new URL(URLString);
-                //ssylka_v_sibir = URLString;
-                HttpURLConnection c=(HttpURLConnection)url.openConnection();
-                c.setRequestMethod("GET");
-                c.setConnectTimeout(30000);
-                c.setReadTimeout(50000);
-                c.connect();
-                reader= new BufferedReader(new InputStreamReader(c.getInputStream()));
-                StringBuilder buf=new StringBuilder();
-                String line=null;
-                while ((line=reader.readLine()) != null) {
-                    buf.append(line + "\n");
-                }
-                return(buf.toString());
-                //return reader.readLine();
-            }
-            catch(Exception e){
-                e.printStackTrace();
-                return "Error\n"+e.getMessage();
-            }
-            finally {
-                if (reader != null) {
-                    reader.close();
-                }
-            }
-
-        }
-    }
     public void open(String jsonStr){
-        QrJSONHelper helper = new QrJSONHelper();
-        info = helper.importFromJSON(jsonStr).get(0);
-        ma.showingQR = true;
-        butt.setVisibility(View.GONE);
-
-        if(info!=null){
-            wv.setVisibility(View.VISIBLE);
-            tv.setVisibility(View.GONE);
-            wv.loadData(getString(R.string.web_start) + "<h4>" + info.name + "</h4><br>" + info.text + getString(R.string.web_end), "text/html; charset=utf-8", "utf-8");
-        }
-        else{
-            wv.setVisibility(View.GONE);
-            tv.setVisibility(View.VISIBLE);
-            //wv.loadData(getString(R.string.web_start) + "Данный QR-код не является QR-кодом аудитории. Его содержимое:<br>"+jsonStr +  getString(R.string.web_end), "text/html; charset=utf-8", "utf-8");
-            tv.setText("Данный QR-код не является QR-кодом аудитории. Его содержимое:\n"+contents);
-        }
-
+        JSONHelper helper1 = new JSONHelper(this,new QrJSONHelper());
+        helper1.execute(jsonStr);
     }
 
     @Override
@@ -250,7 +163,19 @@ public class SendFragment extends Fragment implements IOpensJson {
 
     @Override
     public void displayJson(ArrayList a) {
-
+        ma.showingQR = true;
+        butt.setVisibility(View.GONE);
+        if (a!= null){
+            info = (qr)a.get(0);
+            wv.setVisibility(View.VISIBLE);
+            tv.setVisibility(View.GONE);
+            wv.loadData(getString(R.string.web_start) + "<h4>" + info.name + "</h4><br>" + info.text + getString(R.string.web_end), "text/html; charset=utf-8", "utf-8");
+        }
+        else{
+            wv.setVisibility(View.GONE);
+            tv.setVisibility(View.VISIBLE);
+            tv.setText("Данный QR-код не является QR-кодом аудитории. Его содержимое:\n"+contents);
+        }
     }
 
     public static void closeQR(){

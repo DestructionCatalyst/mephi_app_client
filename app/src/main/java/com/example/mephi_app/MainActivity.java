@@ -1,77 +1,56 @@
 package com.example.mephi_app;
 
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.pm.ActivityInfo;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.fragment.app.FragmentManager;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
+import com.example.mephi_app.ui.IOpensJson;
+import com.example.mephi_app.ui.JSONHelper;
+import com.example.mephi_app.ui.NetworkTask;
 import com.example.mephi_app.ui.gallery.GalleryFragment;
 import com.example.mephi_app.ui.home.HomeFragment;
 import com.example.mephi_app.ui.send.SendFragment;
 import com.google.android.material.navigation.NavigationView;
 
-import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements IOpensJson {
 
-    private static final String LOG_TAG = "MyLogs";
+    public final String lnkbase="http://194.87.232.95:45555/home/";
+    private final String lnkpost="getgroups/";
+    private final String FILE_NAME = "group";
+
     private AppBarConfiguration mAppBarConfiguration;
-    public group curGroup;
-    String JSONString;
-    public ArrayList<group> groups;
-    //private String lnk="http://192.168.1.7:3000/home/getgroups/";
-    public String lnkbase="http://194.87.232.95:45555/home/";
-    private String lnkpost="getgroups/";
-    private String FILE_NAME = "group";
-    public boolean firstLaunch = false;
-    private FragmentManager myFragmentManager;
-    public boolean showingQR;
-    ProgressTask task = new ProgressTask();
-    ProgressTask tsk = new ProgressTask();
 
+    public group curGroup;
+    public ArrayList<group> groups;
+
+
+    public boolean firstLaunch = false;
+    public boolean showingQR;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        myFragmentManager = this.getSupportFragmentManager();
+
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-
-
-
-
-        //FloatingActionButton fab = findViewById(R.id.fab);
-       /* fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });*/
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         NavigationView navigationView = findViewById(R.id.nav_view);
@@ -86,9 +65,9 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
 
-        //ProgressTask task = new ProgressTask();
-        task.execute(lnkbase+lnkpost);
 
+        NetworkTask task1 = new NetworkTask(this);
+        task1.execute(lnkbase+lnkpost);
     }
 
     @Override
@@ -104,19 +83,6 @@ public class MainActivity extends AppCompatActivity {
         return NavigationUI.navigateUp(navController, mAppBarConfiguration)
                 || super.onSupportNavigateUp();
     }
-
-    /*@Override
-    public boolean onOptionsItemSelected(MenuItem item)
-    {
-        super.onOptionsItemSelected(item);
-        FragmentTransaction fragmentTransaction = myFragmentManager
-                .beginTransaction();
-        fragmentTransaction.addToBackStack(null);
-        fragmentTransaction.commit();
-
-        return  true;
-    }*/
-
 
 
     @Override
@@ -143,105 +109,41 @@ public class MainActivity extends AppCompatActivity {
 
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        Log.d(LOG_TAG, "onRestoreInstanceState");
+        Log.d("MyLogs", "onRestoreInstanceState");
     }
 
     protected void onResume() {
         super.onResume();
-        Log.d(LOG_TAG, "onResume ");
+        Log.d("MyLogs", "onResume ");
     }
 
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        Log.d(LOG_TAG, "onSaveInstanceState");
+        Log.d("MyLogs", "onSaveInstanceState");
     }
 
-    private class ProgressTask extends AsyncTask<String, Void, String> {
-        @Override
-        protected void onPreExecute(){
-            Log.d("Connection","Пошла моча по трубам!");
-        }
-        @Override
-        protected String doInBackground(String... path) {
-            Log.d("Connection",path[0]);
-            String content;
-            try{
-
-                content = getContent(path[0]);
-
-            }
-            catch (IOException ex){
-                content = ex.getMessage();
-            }
-            //JSONString = content;
-            return content;
-        }
-        @Override
-        protected void onPostExecute(String content) {
-            JSONString = content;
-            /*AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
-            builder1.setMessage(content)
-                    .setTitle("Content");
-            AlertDialog dialog1 = builder1.create();
-            dialog1.show();*/
-
-            if (content == null)swearAndExit();
-            if (content.startsWith("Error!\n"))swear2(content);
-            Log.d("Connection",""+content);
-            groups = new ArrayList<>();
-
-            open(JSONString);
-
-
-        }
-
-        private String getContent(String path) throws IOException {
-            BufferedReader reader=null;
-            try {
-                URL url=new URL(path);
-                HttpURLConnection c=(HttpURLConnection)url.openConnection();
-                c.setRequestMethod("GET");
-                c.setConnectTimeout(30000);
-                c.setReadTimeout(50000);
-                c.connect();
-                reader= new BufferedReader(new InputStreamReader(c.getInputStream()));
-                StringBuilder buf=new StringBuilder();
-                String line=null;
-                /*while ((line=reader.readLine()) != null) {
-                    buf.append(line + "\n");
-                }
-                return(buf.toString());*/
-                line = reader.readLine();
-                return line;
-                //return reader.readLine();
-            }
-            catch(Exception e){
-                e.printStackTrace();
-                StackTraceElement [] err = e.getStackTrace();
-                //Log.d("Connection","-------------------"+e.getMessage());
-                String tmp=e.getMessage()+"\n";
-                for (int i = 0;i<err.length;i++){
-                    tmp+=err[i]+"\n   ";
-                }
-                return "Error!\n"+tmp;
-            }
-            finally {
-                if (reader != null) {
-                    reader.close();
-                }
-            }
-
-        }
-    }
-    public void open(String jsonStr){
+    public void open(String jsonStr){//IOpensJson
         GroupsJSONHelper helper = new GroupsJSONHelper();
-        groups = helper.importFromJSON(jsonStr);
-        try{
-        groups.add(0,(new group(0,"(Гость)",0)));
-        readFile();
+        //groups = helper.importFromJSON(jsonStr);
 
-        HomeFragment.openGroups();
-       } catch (Exception e) {
+        JSONHelper helper1 = new JSONHelper(this, new GroupsJSONHelper());
+        helper1.execute(jsonStr);
+
+    }
+
+    @Override
+    public void swear(String swearing) {//IOpensJson
+        //HomeFragment swears instead!
+    }
+
+    @Override
+    public void displayJson(ArrayList groups) {//IOpensJson
+        this.groups = groups;
+        try{
+            groups.add(0,(new group(0,"(Гость)",0)));
+            readFile();
+            HomeFragment.openGroups();
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -249,13 +151,11 @@ public class MainActivity extends AppCompatActivity {
     private  void readFile(){
         String read = "";
         boolean flag = false, found = false;
-        //curGroup = new group(0,"(Гость)",0);
         try {
             FileInputStream fin = this.openFileInput(FILE_NAME);
             byte [] b = new byte[fin.available()];
             fin.read(b);
             read = new String (b);
-            //Toast.makeText(this, read, Toast.LENGTH_SHORT).show();
             fin.close();
         }
         catch (FileNotFoundException e) {
@@ -264,9 +164,8 @@ public class MainActivity extends AppCompatActivity {
         }
         catch (IOException e) {
             e.printStackTrace();
-            //Toast.makeText(this, "Ошибка загрузки данных!", Toast.LENGTH_SHORT).show();
         }
-        if ((flag)||(read == "")||(read == "(Гость)")){
+        if ((flag)||(read.equals(""))||(read.equals("(Гость)"))){
             curGroup = new group(0,"(Гость)",0);
         }
         else {
@@ -274,102 +173,22 @@ public class MainActivity extends AppCompatActivity {
                if (tmp.name.equalsIgnoreCase(read)) {
                    curGroup = tmp;
                    found = true;
-
-                   //Toast.makeText(this, "Найдено!", Toast.LENGTH_SHORT).show();
                }
             }
             if (!found){curGroup = new group(0,"(Гость)",0);}
-            //else Toast.makeText(this, "Непустая группа!", Toast.LENGTH_SHORT).show();
         }
-        //Toast.makeText(this, "Группа: "+curGroup.name+", Институт: "+curGroup.idInst, Toast.LENGTH_SHORT).show();
     }
 
     public void hideKeyboard() {
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(getWindow().getDecorView().getWindowToken(), 0);
     }
-    private void swear2(String error){
-        AlertDialog.Builder builder1 = new AlertDialog.Builder(this);
-        builder1.setMessage("Произошла ошибка подключения\n"+error)
-                .setTitle("Проверьте подключение к Интернету")
-                .setCancelable(false)
-                .setNegativeButton("Выход",
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                dialog.cancel();
-                                killApp();
-                            }
-                        });
-        AlertDialog dialog1 = builder1.create();
-        dialog1.show();
-    }
-    private void swearAndExit(){
-        AlertDialog.Builder builder1 = new AlertDialog.Builder(this);
-        builder1.setMessage("Нет подключения к серверу. Проверьте, подключено ли ваше устройство к мобильной или WI-Fi сети.\n" +
-                "Если Вы уверены, что подключены к Интернету и знаете адрес сервера, то Вы можете ввести его вручную")
-                .setTitle("Проверьте подключение к Интернету")
-                .setCancelable(false)
-                .setPositiveButton("Указать адрес сервера", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        setLnkbase();
-                    }
-                })
-                .setNegativeButton("Выход",
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                dialog.cancel();
-                                killApp();
-                            }
-                        });
-        AlertDialog dialog1 = builder1.create();
-        dialog1.show();
-        //finish();
-    }
 
-    private void setLnkbase(){
-
-        AlertDialog.Builder alert = new AlertDialog.Builder(this);
-
-        alert.setTitle("Введите адрес сервера");
-        alert.setMessage("Введите IP-адрес сервера или ссылку на него в формате example.com (Если подключение защищённое, сначала введите https://)");
-
-        final EditText input = new EditText(this);
-        alert.setView(input);
-
-        alert.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int whichButton) {
-                String value = input.getText().toString();
-                String [] parsed = value.split("://");
-                if (parsed [0].equals("https")){lnkbase = "https://"+parsed[1]+"/home/";}
-                else if (parsed [0].equals("http")){lnkbase = "http://"+parsed[1]+"/home/";}
-                else {lnkbase = "http://"+parsed[0]+"/home/";}
-                Log.d("Link",lnkbase+lnkpost);
-                //ProgressTask tsk = new ProgressTask();
-                tsk.execute(lnkbase+lnkpost);
-                //boolean ch = HomeFragment.sw.isChecked();
-                //HomeFragment.listView.setVisibility(View.INVISIBLE);
-                HomeFragment.ne_lez = true;
-                HomeFragment.sw.setChecked(true);
-                HomeFragment.ne_lez = false;
-                HomeFragment.sw.setChecked(false);
-            }
-        });
-
-        alert.setNegativeButton("Выход", new DialogInterface.OnClickListener() {
-            public void onClick(DialogInterface dialog, int whichButton) {
-                killApp();
-            }
-        });
-
-        alert.show();
-
-
-    }
 
     private void killApp(){
         try {
-            Thread.sleep(1000);
-            System.exit(404);
+            Thread.sleep(250);
+            System.exit(0);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
