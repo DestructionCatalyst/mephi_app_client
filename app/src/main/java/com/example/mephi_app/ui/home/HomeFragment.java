@@ -1,8 +1,8 @@
 package com.example.mephi_app.ui.home;
 
 import android.app.AlertDialog;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,35 +26,38 @@ import androidx.lifecycle.ViewModelProviders;
 import com.example.mephi_app.MainActivity;
 import com.example.mephi_app.R;
 import com.example.mephi_app.group;
+import com.example.mephi_app.ui.IOpensJson;
+import com.example.mephi_app.ui.JSONHelper;
+import com.example.mephi_app.ui.NetworkTask;
 
-import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 
 import static android.content.Context.MODE_PRIVATE;
 
-public class HomeFragment extends Fragment {
+public class HomeFragment extends Fragment implements IOpensJson {
+    private final String lnkpost = "getnews?inst=";
+    private final static String FILE_NAME = "group";
 
     private HomeViewModel homeViewModel;
+
     private static MainActivity ma;
-    public static Spinner spinner;
-    private ArrayList<news> newsArrayList;
-    private String JSONString;
-    //private  String lnk = "http://192.168.1.7:3000/home/getnews/?inst=";
-    private String lnkpost = "getnews?inst=";
+
+    private static Spinner spinner;
     public static Switch sw;
-    static String FILE_NAME = "group";
-    private static ArrayAdapter adapter;
-    private MyAdapter adapter1;
     private static TextView text;
-    public static ListView listView;
-    static LinearLayout ll;
-    public static WebView wv;
+    private static ListView listView;
+    private static LinearLayout ll;
+    private static WebView wv;
+
+    private ArrayList<news> newsArrayList;
+
+
+    private static ArrayAdapter groupAdapter;
+    private MyAdapter newsAdapter;
+
     public static boolean ne_lez=false;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -76,7 +79,8 @@ public class HomeFragment extends Fragment {
         ll = root.findViewById(R.id.linlay1);
 
         if (!ma.firstLaunch){ma.firstLaunch = true;}
-            else open();
+            else openGroups();
+
         listView = root.findViewById(R.id.listView);
 
         text = root.findViewById(R.id.textView4);
@@ -98,117 +102,55 @@ public class HomeFragment extends Fragment {
                  }
             );
         }
-        ProgressTask task = new ProgressTask();
-        task.execute(ma.lnkbase+lnkpost+"0");
 
+        NetworkTask task1 = new NetworkTask(this);
+        task1.execute(ma.lnkbase+lnkpost+"0");
 
+        Log.d("Link",ma.lnkbase+lnkpost);
 
         return root;
     }
 
 
+    public void open(String jsonStr){//IOpensJson
 
-    private class ProgressTask extends AsyncTask<String, Void, String>{
-        //@Override
-        protected String doInBackground(String... path) {
-
-            String content;
-            try{
-                content = getContent(path[0]);
-
-            }
-            catch (IOException ex){
-                content = ex.getMessage();
-            }
-            //JSONString = content;
-            return content;
-        }
-        //@Override
-        protected void onPostExecute(String content) {
-            JSONString = content;
-            /*AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
-            builder1.setMessage(content)
-                    .setTitle("Content");
-            AlertDialog dialog1 = builder1.create();
-            dialog1.show();*/
-
-            newsArrayList = new ArrayList<>();
-           // if (content == null)ma.killApp();
-
-            // adapter = new ArrayAdapter<>(this.getActivity(), android.R.layout.simple_list_item_1, reminders);
-            //listView.setAdapter(adapter);
-
-            openJSON(JSONString);
-
-
-        }
-
-        private String getContent(String path) throws IOException {
-            BufferedReader reader=null;
-            try {
-                URL url=new URL(path);
-                HttpURLConnection c=(HttpURLConnection)url.openConnection();
-                c.setRequestMethod("GET");
-                c.setConnectTimeout(30000);
-                c.setReadTimeout(50000);
-                c.connect();
-                reader= new BufferedReader(new InputStreamReader(c.getInputStream()));
-                StringBuilder buf=new StringBuilder();
-                String line=null;
-                while ((line=reader.readLine()) != null) {
-                    buf.append(line + "\n");
-                }
-                return(buf.toString());
-                //return reader.readLine();
-            }
-            catch(Exception e){
-                e.printStackTrace();
-                return null;
-            }
-            finally {
-                if (reader != null) {
-                    reader.close();
-                }
-            }
-
-        }
-    }
-
-    private void openJSON(String jsonStr){
-        NewsJSONHelper helper= new NewsJSONHelper();
-        newsArrayList = helper.importFromJSON(jsonStr);
-        if(newsArrayList!=null){
-            //Toast.makeText(this, "Данные восстановлены", Toast.LENGTH_LONG).show();
-            news tmp;
-            for (int i = 0; i<newsArrayList.size()/2; i++){
-                tmp = newsArrayList.get(i);
-                newsArrayList.set(i, newsArrayList.get(newsArrayList.size()-1-i));
-                newsArrayList.set(newsArrayList.size()-1-i, tmp);
-            }
-            adapter1 = new MyAdapter(this.getActivity(), this,newsArrayList);
-            listView.setAdapter(adapter1);
-
-        }
-        else{
-            AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
-
-
-            builder1.setMessage("Не удалось преобразовать в JSON!")
-                    .setTitle("Сообщение!");
-
-
-            AlertDialog dialog1 = builder1.create();
-            //dialog1.show();
-        }
+        JSONHelper helper1 = new JSONHelper(this, new NewsJSONHelper());
+        helper1.execute(jsonStr);
 
     }
 
-    public static void open(){
+    @Override
+    public void swear(String swearing) {//IOpensJson
+        String fullSwearing = "Ошибка открытия страницы мероприятий. "+swearing;
+        Log.d("Connection", fullSwearing);
+        AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
+        builder1.setMessage(fullSwearing)
+                .setTitle("Ошибка!")
+                .setPositiveButton("OK",null);
+        AlertDialog dialog1 = builder1.create();
+        dialog1.show();
+    }
+
+    @Override
+    public void displayJson(ArrayList a) {//IOpensJson
+        newsArrayList = a;
+
+        news tmp;
+
+        for (int i = 0; i<newsArrayList.size()/2; i++){//Перевернуть массив новостей, чтобы сначала были новые
+            tmp = newsArrayList.get(i);
+            newsArrayList.set(i, newsArrayList.get(newsArrayList.size()-1-i));
+            newsArrayList.set(newsArrayList.size()-1-i, tmp);
+        }
+        newsAdapter = new MyAdapter(this.getActivity(), this,newsArrayList);
+        listView.setAdapter(newsAdapter);
+    }
+
+    public static void openGroups(){
         try {
-            adapter = new ArrayAdapter(ma, android.R.layout.simple_spinner_item, ma.groups);
-            adapter.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
-            spinner.setAdapter(adapter);
-            //Toast.makeText(ma, ""+ma.curGroup.id, Toast.LENGTH_SHORT).show();
+            groupAdapter = new ArrayAdapter(ma, android.R.layout.simple_spinner_item, ma.groups);
+            groupAdapter.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
+            spinner.setAdapter(groupAdapter);
             spinner.setSelection(ma.curGroup.id);
 
             AdapterView.OnItemSelectedListener itemSelectedListener = new AdapterView.OnItemSelectedListener() {
@@ -222,7 +164,6 @@ public class HomeFragment extends Fragment {
                         fos = ma.openFileOutput(FILE_NAME, MODE_PRIVATE);
                         String write = "";
                         write = ma.curGroup.name;
-                        //Toast.makeText(ma, "Сохранено "+write, Toast.LENGTH_SHORT).show();
                         fos.write(write.getBytes());
                         fos.close();
                     } catch (FileNotFoundException e) {
@@ -268,17 +209,16 @@ public class HomeFragment extends Fragment {
 
 
     }
-    public  void refresh(boolean targeting){
+    private void refresh(boolean targeting){
+        NetworkTask task1 = new NetworkTask(this);
         if (targeting){
-            ProgressTask task = new ProgressTask();
-            task.execute(ma.lnkbase+lnkpost+ma.curGroup.idInst);
+            task1.execute(ma.lnkbase+lnkpost+ma.curGroup.idInst);
         }else {
-            ProgressTask task = new ProgressTask();
-            task.execute(ma.lnkbase+lnkpost+"0");
+            task1.execute(ma.lnkbase+lnkpost+"0");
         }
     }
 
-    public void  ReplaceMeDaddy(news shown){
+    void  ReplaceMeDaddy(news shown){
 
         if (ll.getVisibility() == View.VISIBLE) {
             ll.setVisibility(View.GONE);

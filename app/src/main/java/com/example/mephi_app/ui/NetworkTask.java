@@ -70,15 +70,15 @@ public class NetworkTask extends AsyncTask<String, Void, String> {
 
     @Override
     protected void onPostExecute(String content) {
-        String JSONString = content;
-        Log.d("Connection","Got JSON from the server: "+content);
         super.onPreExecute();
         if (content.startsWith("[{")){
             //Открываем
+            Log.d("Connection","Got JSON from the server");
             context.open(content);
         }
         else{
             //Ругаемся
+            Log.d("Connection","Error getting JSON from the server");
             context.swear(content);
         }
 

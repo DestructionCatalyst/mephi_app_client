@@ -240,7 +240,7 @@ public class MainActivity extends AppCompatActivity {
         groups.add(0,(new group(0,"(Гость)",0)));
         readFile();
 
-        HomeFragment.open();
+        HomeFragment.openGroups();
        } catch (Exception e) {
             e.printStackTrace();
         }

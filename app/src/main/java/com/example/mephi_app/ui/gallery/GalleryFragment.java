@@ -94,7 +94,7 @@ public class GalleryFragment extends Fragment implements IOpensJson{
 
     public void open(String jsonStr){//IOpensJson
 
-        JSONHelper helper1 = new JSONHelper(this, FILE_NAME, new ReminderJSONHelper());
+        JSONHelper helper1 = new JSONHelper(this, new ReminderJSONHelper());
         helper1.execute(jsonStr);
 
     }

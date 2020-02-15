@@ -7,12 +7,10 @@ import java.util.ArrayList;
 public class JSONHelper extends AsyncTask <String,Void,ArrayList>{
     private JSONStrategy jsonStrat;
     private IOpensJson context;
-    private String filename;
 
-    public JSONHelper(IOpensJson context, String filename, JSONStrategy strat){
+    public JSONHelper(IOpensJson context, JSONStrategy strat){
         this.context = context;
         this.jsonStrat = strat;
-        this.filename = filename;
     }
 
     @Override
