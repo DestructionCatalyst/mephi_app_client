@@ -32,6 +32,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -245,6 +246,11 @@ public class SendFragment extends Fragment implements IOpensJson {
                 .setTitle("Ошибка!");
         AlertDialog dialog1 = builder1.create();
         dialog1.show();
+    }
+
+    @Override
+    public void displayJson(ArrayList a) {
+
     }
 
     public static void closeQR(){

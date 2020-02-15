@@ -5,11 +5,11 @@ import android.os.AsyncTask;
 import java.util.ArrayList;
 
 public class JSONHelper extends AsyncTask <String,Void,ArrayList>{
-    JSONStrategy jsonStrat;
-    IOpensFiles context;
-    String filename;
+    private JSONStrategy jsonStrat;
+    private IOpensJson context;
+    private String filename;
 
-    public JSONHelper(IOpensFiles context, JSONStrategy strat, String filename){
+    public JSONHelper(IOpensJson context, String filename, JSONStrategy strat){
         this.context = context;
         this.jsonStrat = strat;
         this.filename = filename;
@@ -17,13 +17,13 @@ public class JSONHelper extends AsyncTask <String,Void,ArrayList>{
 
     @Override
     protected ArrayList doInBackground(String... strings) {
-          ArrayList a = jsonStrat.importFromJSON(strings[0]);
-        return a;
+        return jsonStrat.importFromJSON(strings[0]);
     }
     @Override
     protected void onPostExecute(ArrayList content) {
         if (context!=null){
-            context.openFile(filename);
+            context.displayJson(content);
         }
+
     }
 }

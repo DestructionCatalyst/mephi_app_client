@@ -1,7 +1,6 @@
 package com.example.mephi_app.ui.gallery;
 
 import android.app.AlertDialog;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -17,45 +16,37 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
 import com.example.mephi_app.MainActivity;
 import com.example.mephi_app.R;
+import com.example.mephi_app.ui.IOpensJson;
+import com.example.mephi_app.ui.JSONHelper;
+import com.example.mephi_app.ui.NetworkTask;
 
-import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 
 import static android.content.Context.MODE_PRIVATE;
 
 
-public class GalleryFragment extends Fragment {
-    private String lnk="http://192.168.1.7:3000/home/getrem/", JSONString;
-    private String lnkpost = "getrem/";
-    private MyAdapter  adapter;
+public class GalleryFragment extends Fragment implements IOpensJson{
+    final private String lnkpost = "getrem/";
+    final String FILE_NAME = "reminders";
+
+    private MyAdapter adapter;
     private ArrayList<reminder> reminders;
     private ArrayList<reminder> show;
-    public static ListView listView;
-    Switch swtch;
-    MainActivity ma;
-    String FILE_NAME = "reminders";
-    Bundle is = new Bundle();
 
+    MainActivity ma;
     public static LinearLayout ll;
     public static WebView wv;
-
-
-    Fragment reminder_info;
-    FragmentManager myFragmentManager;
-    //private static final String FILE_NAME = "data.json";
+    public static ListView listView;
+    Switch swtch;
 
     private GalleryViewModel galleryViewModel;
 
@@ -91,146 +82,37 @@ public class GalleryFragment extends Fragment {
         ll = (LinearLayout) root.findViewById(R.id.linlay);
         wv = (WebView) root.findViewById(R.id.webview);
 
-        ProgressTask task = new ProgressTask();
-        task.execute(ma.lnkbase+lnkpost);
+        NetworkTask task1 = new NetworkTask(this);
+        task1.execute(ma.lnkbase+lnkpost);
+
         Log.d("Link",ma.lnkbase+lnkpost);
-        //LinearLayout lin =(LinearLayout) root.findViewById(R.id.linlay);
-        //lin.setVisibility(View.GONE);
-
-
 
         return root;
 
 
     }
 
-    /*@Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        onSaveInstanceState(is);
-    }*/
+    public void open(String jsonStr){//IOpensJson
 
-
-    private class ProgressTask extends AsyncTask<String, Void, String> {
-        @Override
-        protected String doInBackground(String... path) {
-
-            String content;
-            try{
-                content = getContent(path[0]);
-
-            }
-            catch (IOException ex){
-                content = ex.getMessage();
-            }
-            //JSONString = content;
-            return content;
-        }
-        @Override
-        protected void onPostExecute(String content) {
-            JSONString = content;
-            /*AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
-            builder1.setMessage(content)
-                    .setTitle("Content");
-            AlertDialog dialog1 = builder1.create();
-            dialog1.show();*/
-
-            reminders = new ArrayList<>();
-
-           // adapter = new ArrayAdapter<>(this.getActivity(), android.R.layout.simple_list_item_1, reminders);
-            //listView.setAdapter(adapter);
-
-            open(JSONString);
-
-
-        }
-
-        private String getContent(String path) throws IOException {
-            BufferedReader reader=null;
-            try {
-                URL url=new URL(path);
-                HttpURLConnection c=(HttpURLConnection)url.openConnection();
-                c.setRequestMethod("GET");
-                c.setConnectTimeout(30000);
-                c.setReadTimeout(50000);
-                c.connect();
-                reader= new BufferedReader(new InputStreamReader(c.getInputStream()));
-                StringBuilder buf=new StringBuilder();
-                String line=null;
-                while ((line=reader.readLine()) != null) {
-                    buf.append(line + "\n");
-                }
-                return(buf.toString());
-                //return reader.readLine();
-            }
-            catch(Exception e){
-                e.printStackTrace();
-                return "Error\n"+e.getMessage();
-            }
-            finally {
-                if (reader != null) {
-                    reader.close();
-                }
-            }
-
-        }
-    }
-    public void open(String jsonStr){
-        ReminderJSONHelper helper = new ReminderJSONHelper();
-        reminders = helper.importFromJSON(jsonStr);
-        if(reminders!=null){
-
-
-            //Toast.makeText(this, "Данные восстановлены", Toast.LENGTH_LONG).show();
-
-            try {
-                FileInputStream fin = ma.openFileInput(FILE_NAME);
-                byte [] b = new byte[fin.available()];
-                fin.read(b);
-                String read = new String (b);
-                //Toast.makeText(ma, "Загружена строка: "+read, Toast.LENGTH_SHORT).show();
-                String [] tmp= read.split("~");
-                int id = 0;
-                ArrayList ids = new ArrayList();
-                for (int i=0; i<tmp.length; i++){
-                    if (tmp[i]!= "")id = Integer.parseInt(tmp[i]);
-                    ids.add(id);
-                }
-                //Toast.makeText(ma, ids.toString(), Toast.LENGTH_SHORT).show();
-                for (reminder cur:reminders) {
-                    if (ids.contains(cur.id)){reminders.get(reminders.indexOf(cur)).check = true;
-                        //Toast.makeText(ma, "Загружен элемент "+cur.id, Toast.LENGTH_SHORT).show();
-                    }
-                }
-                refresh(0);
-                fin.close();
-            }
-            catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-            catch (IOException e) {
-                e.printStackTrace();
-                Toast.makeText(ma, "Ошибка загрузки данных!", Toast.LENGTH_SHORT).show();
-            }
-            adapter = new MyAdapter(this.getActivity(), this,reminders);
-            listView.setAdapter(adapter);
-
-        }
-        else{
-            AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
-
-
-            builder1.setMessage("Не удалось преобразовать в JSON!")
-                    .setTitle("Сообщение!");
-
-
-            AlertDialog dialog1 = builder1.create();
-            dialog1.show();
-        }
+        JSONHelper helper1 = new JSONHelper(this, FILE_NAME, new ReminderJSONHelper());
+        helper1.execute(jsonStr);
 
     }
-    public void refresh(int callType){
-        String bigZalupa = "";
+
+    @Override
+    public void swear(String swearing) {//IOpensJson
+        String fullSwearing = "Ошибка открытия памятки первокурсника. "+swearing;
+        Log.d("Connection", fullSwearing);
+        AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
+        builder1.setMessage(fullSwearing)
+                .setTitle("Ошибка!")
+                .setPositiveButton("OK",null);
+        AlertDialog dialog1 = builder1.create();
+        dialog1.show();
+    }
+
+    void refresh(int callType){
+
         if ((callType==0)||(swtch.isChecked())) {
 
             try {
@@ -259,7 +141,7 @@ public class GalleryFragment extends Fragment {
                 for (reminder cur: reminders) {
                     if (cur.check)write+= cur.id+"~";
                 }
-                //Toast.makeText(ma, "Сохранено "+write, Toast.LENGTH_SHORT).show();
+
                 fos.write(write.getBytes());
                 fos.close();
             } catch (FileNotFoundException e) {
@@ -269,16 +151,10 @@ public class GalleryFragment extends Fragment {
                 Toast.makeText(ma, "Ошибка сохранения данных!", Toast.LENGTH_SHORT).show();
             }
         }
-        /*for (reminder cur : reminders) {
-            String zalupa;
-            if (cur.check){zalupa="true";}else zalupa="false";
-            bigZalupa+=zalupa+" ";
-        }
-        Toast.makeText(ma, bigZalupa,
-                Toast.LENGTH_SHORT).show();*/
+
     }
 
-    public void  ReplaceMeDaddy(reminder shown){
+    void  ReplaceMeDaddy(reminder shown){
 
         if (ll.getVisibility() == View.VISIBLE) {
             ll.setVisibility(View.GONE);
@@ -304,4 +180,38 @@ public class GalleryFragment extends Fragment {
     }
 
 
+
+    @Override
+    public void displayJson(ArrayList reminders){//IOpensJson
+        this.reminders = reminders;
+        try {
+            FileInputStream fin = ma.openFileInput(FILE_NAME);
+            byte [] b = new byte[fin.available()];
+            fin.read(b);
+            String read = new String (b);
+            String [] tmp= read.split("~");
+            int id = 0;
+            ArrayList ids = new ArrayList();
+            for (String s : tmp) {
+                if (!s.equals("")) id = Integer.parseInt(s);
+                ids.add(id);
+            }
+
+            for (reminder cur:this.reminders) {
+                if (ids.contains(cur.id)){this.reminders.get(this.reminders.indexOf(cur)).check = true;
+                }
+            }
+            refresh(0);
+            fin.close();
+        }
+        catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(ma, "Ошибка загрузки данных!", Toast.LENGTH_SHORT).show();
+        }
+        adapter = new MyAdapter(this.getActivity(), this, this.reminders);
+        listView.setAdapter(adapter);
+    }
 }
