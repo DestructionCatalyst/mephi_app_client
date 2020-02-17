@@ -148,6 +148,7 @@ public class SendFragment extends Fragment implements IOpensJson {
     public void open(String jsonStr){
         JSONHelper helper1 = new JSONHelper(this,new QrJSONHelper());
         helper1.execute(jsonStr);
+        ma.offline = false;
     }
 
     @Override
@@ -156,7 +157,8 @@ public class SendFragment extends Fragment implements IOpensJson {
         Log.d("Connection", fullSwearing);
         AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
         builder1.setMessage(fullSwearing)
-                .setTitle("Ошибка!");
+                .setTitle("Ошибка!")
+                .setPositiveButton("OK", null);
         AlertDialog dialog1 = builder1.create();
         dialog1.show();
     }

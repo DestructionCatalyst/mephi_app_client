@@ -96,7 +96,7 @@ public class GalleryFragment extends Fragment implements IOpensJson{
 
         JSONHelper helper1 = new JSONHelper(this, new ReminderJSONHelper());
         helper1.execute(jsonStr);
-
+        ma.offline = false;
     }
 
     @Override

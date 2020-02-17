@@ -1,7 +1,6 @@
 package com.example.mephi_app.ui.slideshow;
 
 import android.app.AlertDialog;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -21,36 +20,35 @@ import androidx.lifecycle.ViewModelProviders;
 import com.example.mephi_app.MainActivity;
 import com.example.mephi_app.R;
 import com.example.mephi_app.ui.IOpensJson;
+import com.example.mephi_app.ui.JSONHelper;
 import com.example.mephi_app.ui.NetworkTask;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 public class SlideshowFragment extends Fragment implements IOpensJson {
 
+    private final String lnkpost = "getdots/", lnkpost1 = "getways/";
+
     private SlideshowViewModel slideshowViewModel;
-    //Spinner spinner_from;
-    //EditText text_from;
-    ArrayList<String> tmp;
-    ArrayList<dot> dots;
-    ArrayList<way> ways;
-    ArrayAdapter adapter;
-    MainActivity ma;
-    String lnkpost = "getdots/", lnkpost1 = "getways/";
-    String JSONString;
+
+    private ArrayList<dot> dots;
+    private ArrayList<way> ways;
+    private ArrayList<dot> show;
+
+    private MainActivity ma;
+
+    private double [] [] tab;
+    private int dotn;
+
+    private AutoCompleteTextView actv,actv1;
     private ArrayAdapter adapter1;
-    AutoCompleteTextView actv,actv1;
-    Button buttoff;
-    double [] [] tab;
-    int dotn;
-    TextView textView;
-    LineView gfx;
-    ArrayList<dot> show;
+    private Button buttoff;
+    private TextView textView;
+    private LineView gfx;
+
+    private boolean dotsLoaded = false, dotsDecoded = false;
+
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -64,9 +62,7 @@ public class SlideshowFragment extends Fragment implements IOpensJson {
                 //textView.setText(s);
             }
         });
-        tmp = new ArrayList<>();
-        tmp.add("Проходная");
-        tmp.add("Корпус Г, центр.вход");
+
         if (getActivity() != null) { ma = (MainActivity) getActivity(); }
         actv = root.findViewById(R.id.auto_text);
         actv1 = root.findViewById(R.id.auto_text1);
@@ -75,87 +71,84 @@ public class SlideshowFragment extends Fragment implements IOpensJson {
         gfx = root.findViewById(R.id.draw_field);
 
         NetworkTask task2 = new NetworkTask(this);
+        task2.execute(ma.lnkbase+lnkpost);
 
-        ProgressTask task = new ProgressTask();
-        task.execute(ma.lnkbase+lnkpost);
-        ProgressTask task1 = new ProgressTask();
-        task1.execute(ma.lnkbase+lnkpost1);
+        NetworkTask task4 = new NetworkTask(this);
+        task4.execute(ma.lnkbase+lnkpost1);
+
 
 
         buttoff.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String fromstr = actv.getText().toString();
-                String tostr = actv1.getText().toString();
-                int from=0, to=0;
-                ArrayList points = new ArrayList();
-                //Log.d("Pathfinder","---"+fromstr);
-                //Log.d("Pathfinder","---"+tostr);
-                for (dot d:dots) {
-                    if (d.name != null) {
-                        if (d.name.equals(fromstr)) {
-                            from = d.id;
-                            //Log.d("Pathfinder",d.name+" - "+d.id);
-                        }
-                        if (d.name.equals(tostr)) {
-                            to = d.id;
-                            //Log.d("Pathfinder",d.name+" - "+d.id);
-                        }
-                        //Log.d("Pathfinder",""+d.id);
-                    }
-                }
-                int [] way = findaway(from-1,to-1);
-                if(way != null) {
-                    String wayStr = "";
-                    if (from == to){
-                        points.add(dots.get(from - 1).x-3);
-                        points.add(dots.get(from - 1).y-3);
-                        points.add(dots.get(from - 1).x+3);
-                        points.add(dots.get(from - 1).y-3);
-                        points.add(dots.get(from - 1).x+3);
-                        points.add(dots.get(from - 1).y+3);
-                        points.add(dots.get(from - 1).x-3);
-                        points.add(dots.get(from - 1).y+3);
-                        Log.d("Pathfinder", "Стоим на месте!");
-                    }
-                    else {
-                        if (from - 1 == 0) {
-                            Log.d("Pathfinder", "" + dots.get(from - 1));
-                            wayStr += dots.get(from - 1) + ">";
-                            points.add(dots.get(from - 1).x);
-                            points.add(dots.get(from - 1).y);
-                        }
-                        for (int j = 0; j < way.length; j++) {
-                            if (way[j] > 0) {
-                                Log.d("Pathfinder", "" + dots.get(way[j]));
-                                wayStr += dots.get(way[j]) + ">";
-                                points.add(dots.get(way[j]).x);
-                                points.add(dots.get(way[j]).y);
+                if (!ma.offline) {
+                    String fromstr = actv.getText().toString();
+                    String tostr = actv1.getText().toString();
+                    int from = 0, to = 0;
+                    ArrayList points = new ArrayList();
+
+                    for (dot d : dots) {
+                        if (d.name != null) {
+                            if (d.name.equals(fromstr)) {
+                                from = d.id;
+                            }
+                            if (d.name.equals(tostr)) {
+                                to = d.id;
                             }
                         }
-                        Log.d("Pathfinder", "" + dots.get(to - 1));
-                        points.add(dots.get(to - 1).x);
-                        points.add(dots.get(to - 1).y);
-                        wayStr += dots.get(to - 1);
-                        textView.setText(wayStr);
-
-
                     }
-                    float[] floatArray = new float[points.size()];
-                    for (int index = 0; index < points.size(); index++) {
-                        floatArray[index] = (int) points.get(index);
-                    }
-                    gfx.MyInvalidate(floatArray);
-                    ma.hideKeyboard();
-                }
-                else {
-                    AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
-                    builder1.setMessage("Неверно указана начальная и/или конечная точка!")
-                            .setTitle("Ошибка!")
-                            .setPositiveButton("ОК", null);
 
-                    AlertDialog dialog1 = builder1.create();
-                    dialog1.show();
+                    int[] way = findaway(from - 1, to - 1);
+                    if (way != null) {
+                        String wayStr = "";
+                        if (from == to) {//Никуда не идём
+                            points.add(dots.get(from - 1).x - 3);
+                            points.add(dots.get(from - 1).y - 3);
+                            points.add(dots.get(from - 1).x + 3);
+                            points.add(dots.get(from - 1).y - 3);
+                            points.add(dots.get(from - 1).x + 3);
+                            points.add(dots.get(from - 1).y + 3);
+                            points.add(dots.get(from - 1).x - 3);
+                            points.add(dots.get(from - 1).y + 3);
+                            Log.d("Pathfinder", "Стоим на месте!");
+                        } else {
+                            if (from - 1 == 0) {//Если стартуем с проходной, обраб. отдельно
+                                Log.d("Pathfinder", "" + dots.get(from - 1));
+                                wayStr += dots.get(from - 1) + ">";
+                                points.add(dots.get(from - 1).x);
+                                points.add(dots.get(from - 1).y);
+                            }
+                            for (int j = 0; j < way.length; j++) {//Проходим по пути
+                                if (way[j] > 0) {
+                                    Log.d("Pathfinder", "" + dots.get(way[j]));
+                                    wayStr += dots.get(way[j]) + ">";
+                                    points.add(dots.get(way[j]).x);
+                                    points.add(dots.get(way[j]).y);
+                                }
+                            }
+                            Log.d("Pathfinder", "" + dots.get(to - 1));
+                            points.add(dots.get(to - 1).x);//Добавляем последнюю точку
+                            points.add(dots.get(to - 1).y);
+                            wayStr += dots.get(to - 1);
+                            textView.setText(wayStr);
+
+
+                        }
+                        float[] floatArray = new float[points.size()];
+                        for (int index = 0; index < points.size(); index++) {
+                            floatArray[index] = (int) points.get(index);
+                        }
+                        gfx.MyInvalidate(floatArray);
+                        ma.hideKeyboard();
+                    } else {
+                        AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
+                        builder1.setMessage("Неверно указана начальная и/или конечная точка!")
+                                .setTitle("Ошибка!")
+                                .setPositiveButton("ОК", null);
+
+                        AlertDialog dialog1 = builder1.create();
+                        dialog1.show();
+                    }
                 }
             }
         });
@@ -165,121 +158,62 @@ public class SlideshowFragment extends Fragment implements IOpensJson {
 
     @Override
     public void open(String jsonStr) {
-
+        if(!dotsLoaded){
+            dotsLoaded = true;
+            JSONHelper helper1 = new JSONHelper(this, new DotJSONHelper());
+            helper1.execute(jsonStr);
+        }
+        else{
+            JSONHelper helper1 = new JSONHelper(this, new WayJSONHelper());
+            helper1.execute(jsonStr);
+        }
+        ma.offline = false;
     }
 
     @Override
     public void swear(String swearing) {
-
+        if(!dotsLoaded) {
+            dotsLoaded = true;
+            String fullSwearing = "Ошибка открытия навигации. " + swearing;
+            Log.d("Connection", fullSwearing);
+            AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
+            builder1.setMessage(fullSwearing)
+                    .setTitle("Ошибка!")
+                    .setPositiveButton("OK", null);
+            AlertDialog dialog1 = builder1.create();
+            dialog1.show();
+        }
     }
 
     @Override
     public void displayJson(ArrayList a) {
-
-    }
-
-    private class ProgressTask extends AsyncTask<String, Void, String> {
-        String pth;
-        @Override
-        protected String doInBackground(String... path) {
-            pth = path[0];
-
-            String content;
-            try{
-                content = getContent(path[0]);
-
-            }
-            catch (IOException ex){
-                content = ex.getMessage();
-            }
-            //JSONString = content;
-            return content;
-        }
-        @Override
-        protected void onPostExecute(String content) {
-            JSONString = content;
-            /*AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
-            builder1.setMessage(content)
-                    .setTitle("Content");
-            AlertDialog dialog1 = builder1.create();
-            dialog1.show();*/
-
-            //newsArrayList = new ArrayList<>();
-
-            if (pth.endsWith("getdots/")) {
-                openJSON(JSONString);
-            }
-            else {
-                WayJSONHelper helper = new WayJSONHelper();
-                ways = helper.importFromJSON(JSONString);
-                //Toast.makeText(ma, ways.get(0).toString(), Toast.LENGTH_LONG).show();
-                makeTable();
-            }
-
-
-        }
-
-        private String getContent(String path) throws IOException {
-            BufferedReader reader=null;
-            try {
-                URL url=new URL(path);
-                HttpURLConnection c=(HttpURLConnection)url.openConnection();
-                c.setRequestMethod("GET");
-                c.setConnectTimeout(30000);
-                c.setReadTimeout(50000);
-                c.connect();
-                reader= new BufferedReader(new InputStreamReader(c.getInputStream()));
-                StringBuilder buf=new StringBuilder();
-                String line=null;
-                while ((line=reader.readLine()) != null) {
-                    buf.append(line + "\n");
+        if(!dotsDecoded){
+            dotsDecoded = true;
+            this.dots = a;
+            if(dots!=null){
+                for (int i = 0; i<dots.size(); i++){
+                    Log.d("dots", " "+dots.get(i).toString());
                 }
-                return(buf.toString());
-                //return reader.readLine();
-            }
-            catch(Exception e){
-                e.printStackTrace();
-                return "Error\n"+e.getMessage();
-            }
-            finally {
-                if (reader != null) {
-                    reader.close();
+                show = new ArrayList<>();
+                for (dot d:dots) {
+                    if (d.name != null){show.add(d);}
                 }
+                adapter1 = new ArrayAdapter(ma, android.R.layout.simple_spinner_item, show);
+                actv.setAdapter(adapter1);
+                actv1.setAdapter(adapter1);
             }
-
-        }
-    }
-
-    private void openJSON(String jsonStr){
-        DotJSONHelper helper = new DotJSONHelper();
-        dots = helper.importFromJSON(jsonStr);
-        if(dots!=null){
-            //Toast.makeText(this, "Данные восстановлены", Toast.LENGTH_LONG).show();
-            for (int i = 0; i<dots.size(); i++){
-               Log.d("dots", " "+dots.get(i).toString());
+            else{
+                AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
+                builder1.setMessage("Не удалось преобразовать в JSON!")
+                        .setTitle("Сообщение!");
+                AlertDialog dialog1 = builder1.create();
+                dialog1.show();
             }
-            show = new ArrayList<>();
-            for (dot d:dots) {
-                if (d.name != null){show.add(d);}
-            }
-            adapter1 = new ArrayAdapter(ma, android.R.layout.simple_spinner_item, show);
-            //spinner_from.setAdapter(adapter1);
-            actv.setAdapter(adapter1);
-            actv1.setAdapter(adapter1);
-
         }
         else{
-            AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
-
-
-            builder1.setMessage("Не удалось преобразовать в JSON!")
-                    .setTitle("Сообщение!");
-
-
-            AlertDialog dialog1 = builder1.create();
-            dialog1.show();
+            this.ways = a;
+            makeTable();
         }
-
     }
 
     private void makeTable(){

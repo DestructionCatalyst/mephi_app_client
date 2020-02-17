@@ -156,7 +156,10 @@ public class HomeFragment extends Fragment implements IOpensJson {
 
         JSONHelper helper1 = new JSONHelper(this, new NewsJSONHelper());
         helper1.execute(jsonStr);
-
+        if(ma.offline){
+            ma.loadGroups();
+        }
+        ma.offline = false;
     }
 
     @Override
@@ -201,7 +204,7 @@ public class HomeFragment extends Fragment implements IOpensJson {
     }
     private void refresh(boolean targeting){
         NetworkTask task1 = new NetworkTask(this);
-        if (targeting){
+        if ((targeting)&&(!ma.offline)){
             task1.execute(ma.lnkbase+lnkpost+ma.curGroup.idInst);
         }else {
             task1.execute(ma.lnkbase+lnkpost+"0");

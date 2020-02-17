@@ -34,6 +34,7 @@ public class MainActivity extends AppCompatActivity implements IOpensJson {
     private final String lnkpost="getgroups/";
     private final String FILE_NAME = "group";
 
+
     private AppBarConfiguration mAppBarConfiguration;
 
     public group curGroup;
@@ -42,6 +43,7 @@ public class MainActivity extends AppCompatActivity implements IOpensJson {
 
     public boolean firstLaunch = false;
     public boolean showingQR;
+    public boolean offline = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,7 +67,10 @@ public class MainActivity extends AppCompatActivity implements IOpensJson {
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
 
+        loadGroups();
+    }
 
+    public void loadGroups(){
         NetworkTask task1 = new NetworkTask(this);
         task1.execute(lnkbase+lnkpost);
     }
@@ -123,17 +128,19 @@ public class MainActivity extends AppCompatActivity implements IOpensJson {
     }
 
     public void open(String jsonStr){//IOpensJson
-        GroupsJSONHelper helper = new GroupsJSONHelper();
-        //groups = helper.importFromJSON(jsonStr);
 
         JSONHelper helper1 = new JSONHelper(this, new GroupsJSONHelper());
         helper1.execute(jsonStr);
-
+        offline = false;
     }
 
     @Override
     public void swear(String swearing) {//IOpensJson
         //HomeFragment swears instead!
+        curGroup = new group(0,"(Гость)",0);
+        groups = new ArrayList<group>();
+        groups.add(curGroup);
+        offline = true;
     }
 
     @Override

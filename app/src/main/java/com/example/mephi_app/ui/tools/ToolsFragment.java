@@ -30,15 +30,12 @@ import static android.content.Context.MODE_PRIVATE;
 public class ToolsFragment extends Fragment {
 
     private ToolsViewModel toolsViewModel;
-    //private String lnk="http://192.168.43.185:3000/home/getgroups/", JSONString;
-    //private ArrayList<group> groups;
-    //private ArrayList<String> groupnames;
+
     private ArrayAdapter<String> adapter;
     private Spinner spinner;
-    MainActivity ma;
-    private String FILE_NAME = "group";
+    private MainActivity ma;
 
-    String[] spintext = {"Выбрать..."};
+    private String FILE_NAME = "group";
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -57,8 +54,8 @@ public class ToolsFragment extends Fragment {
             public void onClick(View v) {
                 AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
                 builder1.setMessage("Приложение «Путеводитель по НИЯУ МИФИ»\n" +
-                        "Версия 1.0\n\n" +
-                        "(с)\n" +
+                        "Версия " +getString(R.string.app_version)+"\n\n"+
+                        "©\n" +
                         "Национальный исследовательский ядерный университет «МИФИ»,\n" +
                         "Институт Интеллектуальных Кибернетических Систем (ИИКС)\n" +
                         "Кафедра №22 «Кибернетика»\n" +
@@ -66,7 +63,8 @@ public class ToolsFragment extends Fragment {
                         "Руководитель проекта: Немешаев Сергей Александрович\n" +
                         "Куратор проекта: Дадтеев Казбек Маирбекович\n" +
                         "Разработчик: Комза Владислав Петрович")
-                        .setTitle("О программе");
+                        .setTitle("О программе")
+                        .setPositiveButton("OK", null);
                 AlertDialog dialog1 = builder1.create();
                 dialog1.show();
             }
@@ -101,13 +99,11 @@ public class ToolsFragment extends Fragment {
     }
 
 
-    public void open(){
+    private void open(){
             try {
                 adapter = new ArrayAdapter(this.getActivity(), android.R.layout.simple_spinner_item, ma.groups);
                 adapter.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
                 spinner.setAdapter(adapter);
-                //spinner.setTPrompt(ma.curGroup.name);
-                //Toast.makeText(ma, ""+ma.curGroup.id, Toast.LENGTH_SHORT).show();
                 spinner.setSelection(ma.curGroup.id);
 
                 AdapterView.OnItemSelectedListener itemSelectedListener = new AdapterView.OnItemSelectedListener() {
@@ -140,7 +136,7 @@ public class ToolsFragment extends Fragment {
                 spinner.setOnItemSelectedListener(itemSelectedListener);
 
 
-            } catch (NullPointerException e) {
+            } catch (Exception e) {
                 Toast.makeText(ma, "Проверьте соединение с Интернетом!",
                         Toast.LENGTH_SHORT).show();
                 //e.printStackTrace();
