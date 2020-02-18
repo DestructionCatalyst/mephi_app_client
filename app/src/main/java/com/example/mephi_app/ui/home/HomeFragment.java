@@ -26,9 +26,10 @@ import androidx.lifecycle.ViewModelProviders;
 import com.example.mephi_app.MainActivity;
 import com.example.mephi_app.R;
 import com.example.mephi_app.group;
-import com.example.mephi_app.ui.IOpensJson;
-import com.example.mephi_app.ui.JSONHelper;
-import com.example.mephi_app.ui.NetworkTask;
+import com.example.mephi_app.IOpensJson;
+import com.example.mephi_app.JSONHelper;
+import com.example.mephi_app.NetworkTask;
+import com.example.mephi_app.ui.LoadErrorMessage;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -51,6 +52,7 @@ public class HomeFragment extends Fragment implements IOpensJson {
     private static ListView listView;
     private static LinearLayout ll;
     private static WebView wv;
+    private LoadErrorMessage lem;
 
     private ArrayList<news> newsArrayList;
 
@@ -87,6 +89,8 @@ public class HomeFragment extends Fragment implements IOpensJson {
 
         sw = root.findViewById(R.id.switch2);
 
+        lem = root.findViewById(R.id.lem_news);
+
         if (sw != null) {
             sw.setOnCheckedChangeListener(new Switch.OnCheckedChangeListener(){
 
@@ -104,36 +108,8 @@ public class HomeFragment extends Fragment implements IOpensJson {
         AdapterView.OnItemSelectedListener itemSelectedListener = new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-
                 ma.curGroup = (group)parent.getItemAtPosition(position);
-                FileOutputStream fos;
-
-                try {
-                    fos = ma.openFileOutput(FILE_NAME, MODE_PRIVATE);
-                    String write = "";
-                    write = ma.curGroup.name;
-                    fos.write(write.getBytes());
-                    fos.close();
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    Toast.makeText(ma, "Ошибка сохранения данных!", Toast.LENGTH_SHORT).show();
-                }
-                if (ma.curGroup.idInst == 0){
-                    sw.setChecked(false);
-                    sw.setVisibility(View.INVISIBLE);
-                    text.setVisibility(View.INVISIBLE);
-
-                }
-                else {
-                    listView.setVisibility(View.INVISIBLE);
-                    refresh(sw.isChecked());
-                    listView.setVisibility(View.VISIBLE);
-                    sw.setVisibility(View.VISIBLE);
-                    text.setVisibility(View.VISIBLE);
-                }
-
+                changeGroup();
             }
 
             @Override
@@ -143,6 +119,7 @@ public class HomeFragment extends Fragment implements IOpensJson {
         };
         spinner.setOnItemSelectedListener(itemSelectedListener);
 
+        lem.changeStatus(LoadErrorMessage.LOAD_PROGRESS);
         NetworkTask task1 = new NetworkTask(this);
         task1.execute(ma.lnkbase+lnkpost+"0");
 
@@ -151,7 +128,7 @@ public class HomeFragment extends Fragment implements IOpensJson {
         return root;
     }
 
-
+    @Override
     public void open(String jsonStr){//IOpensJson
 
         JSONHelper helper1 = new JSONHelper(this, new NewsJSONHelper());
@@ -162,10 +139,12 @@ public class HomeFragment extends Fragment implements IOpensJson {
         ma.offline = false;
     }
 
+
     @Override
     public void swear(String swearing) {//IOpensJson
         String fullSwearing = "Ошибка открытия страницы мероприятий. "+swearing;
         Log.d("Connection", fullSwearing);
+        lem.changeStatus(LoadErrorMessage.LOAD_ERROR);
         AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
         builder1.setMessage(fullSwearing)
                 .setTitle("Ошибка!")
@@ -187,6 +166,7 @@ public class HomeFragment extends Fragment implements IOpensJson {
         }
         newsAdapter = new MyAdapter(this.getActivity(), this,newsArrayList);
         listView.setAdapter(newsAdapter);
+        lem.changeStatus(LoadErrorMessage.LOAD_FINISHED);
     }
 
     public static void openGroups(){
@@ -199,9 +179,8 @@ public class HomeFragment extends Fragment implements IOpensJson {
             Toast.makeText(ma, "Проверьте соединение с Интернетом!",Toast.LENGTH_SHORT).show();
         }
 
-
-
     }
+
     private void refresh(boolean targeting){
         NetworkTask task1 = new NetworkTask(this);
         if ((targeting)&&(!ma.offline)){
@@ -235,4 +214,34 @@ public class HomeFragment extends Fragment implements IOpensJson {
         }
         else return false;
     }
+
+    private void changeGroup(){
+        FileOutputStream fos;
+
+        try {
+            fos = ma.openFileOutput(FILE_NAME, MODE_PRIVATE);
+            String write = "";
+            write = ma.curGroup.name;
+            fos.write(write.getBytes());
+            fos.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(ma, "Ошибка сохранения данных!", Toast.LENGTH_SHORT).show();
+        }
+        if (ma.curGroup.idInst == 0){
+            sw.setChecked(false);
+            sw.setVisibility(View.INVISIBLE);
+            text.setVisibility(View.INVISIBLE);
+        }
+        else {
+            listView.setVisibility(View.INVISIBLE);
+            refresh(sw.isChecked());
+            listView.setVisibility(View.VISIBLE);
+            sw.setVisibility(View.VISIBLE);
+            text.setVisibility(View.VISIBLE);
+        }
+    }
+
 }

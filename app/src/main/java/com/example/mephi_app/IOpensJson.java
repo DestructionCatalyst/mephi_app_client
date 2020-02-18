@@ -1,4 +1,4 @@
-package com.example.mephi_app.ui;
+package com.example.mephi_app;
 
 import java.util.ArrayList;
 

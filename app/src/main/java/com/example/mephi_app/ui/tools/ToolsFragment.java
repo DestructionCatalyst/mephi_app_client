@@ -52,21 +52,7 @@ public class ToolsFragment extends Fragment {
 
             @Override
             public void onClick(View v) {
-                AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
-                builder1.setMessage("Приложение «Путеводитель по НИЯУ МИФИ»\n" +
-                        "Версия " +getString(R.string.app_version)+"\n\n"+
-                        "©\n" +
-                        "Национальный исследовательский ядерный университет «МИФИ»,\n" +
-                        "Институт Интеллектуальных Кибернетических Систем (ИИКС)\n" +
-                        "Кафедра №22 «Кибернетика»\n" +
-                        "Разработано в рамках курса «Проектная практика»\n" +
-                        "Руководитель проекта: Немешаев Сергей Александрович\n" +
-                        "Куратор проекта: Дадтеев Казбек Маирбекович\n" +
-                        "Разработчик: Комза Владислав Петрович")
-                        .setTitle("О программе")
-                        .setPositiveButton("OK", null);
-                AlertDialog dialog1 = builder1.create();
-                dialog1.show();
+                showMessage();
             }
         });
 
@@ -75,18 +61,7 @@ public class ToolsFragment extends Fragment {
         sup.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                try
-                {
-                    Intent contactintent = new Intent(Intent.ACTION_SENDTO);
-                    contactintent.setData(android.net.Uri.parse("mailto:" + "mephiapp@gmail.com"));
-
-                    startActivity(contactintent);
-
-                }
-                catch (ActivityNotFoundException anfe)
-                {
-                    Toast.makeText(ma, "На устройстве не найден почтовый клиент", Toast.LENGTH_SHORT).show();
-                }
+                openMail();
             }
         });
 
@@ -98,6 +73,38 @@ public class ToolsFragment extends Fragment {
         return root;
     }
 
+    private void showMessage(){
+        AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
+        builder1.setMessage("Приложение «Путеводитель по НИЯУ МИФИ»\n" +
+                "Версия " +getString(R.string.app_version)+"\n\n"+
+                "©\n" +
+                "Национальный исследовательский ядерный университет «МИФИ»,\n" +
+                "Институт Интеллектуальных Кибернетических Систем (ИИКС)\n" +
+                "Кафедра №22 «Кибернетика»\n" +
+                "Разработано в рамках курса «Проектная практика»\n" +
+                "Руководитель проекта: Немешаев Сергей Александрович\n" +
+                "Куратор проекта: Дадтеев Казбек Маирбекович\n" +
+                "Разработчик: Комза Владислав Петрович")
+                .setTitle("О программе")
+                .setPositiveButton("OK", null);
+        AlertDialog dialog1 = builder1.create();
+        dialog1.show();
+    }
+
+    private void openMail(){
+        try
+        {
+            Intent contactintent = new Intent(Intent.ACTION_SENDTO);
+            contactintent.setData(android.net.Uri.parse("mailto:" + "mephiapp@gmail.com"));
+
+            startActivity(contactintent);
+
+        }
+        catch (ActivityNotFoundException anfe)
+        {
+            Toast.makeText(ma, "На устройстве не найден почтовый клиент", Toast.LENGTH_SHORT).show();
+        }
+    }
 
     private void open(){
             try {

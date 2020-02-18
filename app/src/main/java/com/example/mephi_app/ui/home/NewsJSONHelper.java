@@ -1,6 +1,6 @@
 package com.example.mephi_app.ui.home;
 
-import com.example.mephi_app.ui.JSONStrategy;
+import com.example.mephi_app.JSONStrategy;
 import com.google.gson.Gson;
 
 import java.util.ArrayList;

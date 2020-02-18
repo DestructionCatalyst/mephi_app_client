@@ -11,6 +11,12 @@
         android:orientation="vertical"
         android:visibility="visible">
 
+        <com.example.mephi_app.ui.LoadErrorMessage
+            android:id="@+id/lem_navigation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            />
+
 
         <AutoCompleteTextView
             android:id="@+id/auto_text"

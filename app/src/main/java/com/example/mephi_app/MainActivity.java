@@ -15,9 +15,6 @@ import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
-import com.example.mephi_app.ui.IOpensJson;
-import com.example.mephi_app.ui.JSONHelper;
-import com.example.mephi_app.ui.NetworkTask;
 import com.example.mephi_app.ui.gallery.GalleryFragment;
 import com.example.mephi_app.ui.home.HomeFragment;
 import com.example.mephi_app.ui.send.SendFragment;
@@ -68,11 +65,6 @@ public class MainActivity extends AppCompatActivity implements IOpensJson {
         NavigationUI.setupWithNavController(navigationView, navController);
 
         loadGroups();
-    }
-
-    public void loadGroups(){
-        NetworkTask task1 = new NetworkTask(this);
-        task1.execute(lnkbase+lnkpost);
     }
 
     @Override
@@ -153,6 +145,11 @@ public class MainActivity extends AppCompatActivity implements IOpensJson {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public void loadGroups(){
+        NetworkTask task1 = new NetworkTask(this);
+        task1.execute(lnkbase+lnkpost);
     }
 
     private  void readFile(){

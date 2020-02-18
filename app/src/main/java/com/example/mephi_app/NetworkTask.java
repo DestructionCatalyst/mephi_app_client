@@ -1,4 +1,4 @@
-package com.example.mephi_app.ui;
+package com.example.mephi_app;
 
 import android.os.AsyncTask;
 import android.util.Log;
@@ -59,7 +59,7 @@ public class NetworkTask extends AsyncTask<String, Void, String> {
             for (int i = 0;i<err.length;i++){
                 tmp+=err[i]+"\n   ";
             }*/
-            return "Не удалось подключиться к серверу!";
+            return "Не удалось подключиться к серверу! Проверьте подключение к Интернету.";
         }
         finally {
             if (reader != null) {

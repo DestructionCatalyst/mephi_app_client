@@ -19,9 +19,10 @@ import androidx.lifecycle.ViewModelProviders;
 
 import com.example.mephi_app.MainActivity;
 import com.example.mephi_app.R;
-import com.example.mephi_app.ui.IOpensJson;
-import com.example.mephi_app.ui.JSONHelper;
-import com.example.mephi_app.ui.NetworkTask;
+import com.example.mephi_app.IOpensJson;
+import com.example.mephi_app.JSONHelper;
+import com.example.mephi_app.NetworkTask;
+import com.example.mephi_app.ui.LoadErrorMessage;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,6 +47,7 @@ public class SlideshowFragment extends Fragment implements IOpensJson {
     private Button buttoff;
     private TextView textView;
     private LineView gfx;
+    private LoadErrorMessage lem;
 
     private boolean dotsLoaded = false, dotsDecoded = false;
 
@@ -69,7 +71,9 @@ public class SlideshowFragment extends Fragment implements IOpensJson {
         buttoff = root.findViewById(R.id.button);
         textView = root.findViewById(R.id.textView6);
         gfx = root.findViewById(R.id.draw_field);
+        lem = root.findViewById(R.id.lem_navigation);
 
+        lem.changeStatus(LoadErrorMessage.LOAD_PROGRESS);
         NetworkTask task2 = new NetworkTask(this);
         task2.execute(ma.lnkbase+lnkpost);
 
@@ -81,75 +85,7 @@ public class SlideshowFragment extends Fragment implements IOpensJson {
         buttoff.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!ma.offline) {
-                    String fromstr = actv.getText().toString();
-                    String tostr = actv1.getText().toString();
-                    int from = 0, to = 0;
-                    ArrayList points = new ArrayList();
-
-                    for (dot d : dots) {
-                        if (d.name != null) {
-                            if (d.name.equals(fromstr)) {
-                                from = d.id;
-                            }
-                            if (d.name.equals(tostr)) {
-                                to = d.id;
-                            }
-                        }
-                    }
-
-                    int[] way = findaway(from - 1, to - 1);
-                    if (way != null) {
-                        String wayStr = "";
-                        if (from == to) {//Никуда не идём
-                            points.add(dots.get(from - 1).x - 3);
-                            points.add(dots.get(from - 1).y - 3);
-                            points.add(dots.get(from - 1).x + 3);
-                            points.add(dots.get(from - 1).y - 3);
-                            points.add(dots.get(from - 1).x + 3);
-                            points.add(dots.get(from - 1).y + 3);
-                            points.add(dots.get(from - 1).x - 3);
-                            points.add(dots.get(from - 1).y + 3);
-                            Log.d("Pathfinder", "Стоим на месте!");
-                        } else {
-                            if (from - 1 == 0) {//Если стартуем с проходной, обраб. отдельно
-                                Log.d("Pathfinder", "" + dots.get(from - 1));
-                                wayStr += dots.get(from - 1) + ">";
-                                points.add(dots.get(from - 1).x);
-                                points.add(dots.get(from - 1).y);
-                            }
-                            for (int j = 0; j < way.length; j++) {//Проходим по пути
-                                if (way[j] > 0) {
-                                    Log.d("Pathfinder", "" + dots.get(way[j]));
-                                    wayStr += dots.get(way[j]) + ">";
-                                    points.add(dots.get(way[j]).x);
-                                    points.add(dots.get(way[j]).y);
-                                }
-                            }
-                            Log.d("Pathfinder", "" + dots.get(to - 1));
-                            points.add(dots.get(to - 1).x);//Добавляем последнюю точку
-                            points.add(dots.get(to - 1).y);
-                            wayStr += dots.get(to - 1);
-                            textView.setText(wayStr);
-
-
-                        }
-                        float[] floatArray = new float[points.size()];
-                        for (int index = 0; index < points.size(); index++) {
-                            floatArray[index] = (int) points.get(index);
-                        }
-                        gfx.MyInvalidate(floatArray);
-                        ma.hideKeyboard();
-                    } else {
-                        AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
-                        builder1.setMessage("Неверно указана начальная и/или конечная точка!")
-                                .setTitle("Ошибка!")
-                                .setPositiveButton("ОК", null);
-
-                        AlertDialog dialog1 = builder1.create();
-                        dialog1.show();
-                    }
-                }
+                runPathfinder();
             }
         });
 
@@ -174,6 +110,7 @@ public class SlideshowFragment extends Fragment implements IOpensJson {
     public void swear(String swearing) {
         if(!dotsLoaded) {
             dotsLoaded = true;
+            lem.changeStatus(LoadErrorMessage.LOAD_ERROR);
             String fullSwearing = "Ошибка открытия навигации. " + swearing;
             Log.d("Connection", fullSwearing);
             AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
@@ -182,6 +119,7 @@ public class SlideshowFragment extends Fragment implements IOpensJson {
                     .setPositiveButton("OK", null);
             AlertDialog dialog1 = builder1.create();
             dialog1.show();
+
         }
     }
 
@@ -213,6 +151,7 @@ public class SlideshowFragment extends Fragment implements IOpensJson {
         else{
             this.ways = a;
             makeTable();
+            lem.changeStatus(LoadErrorMessage.LOAD_FINISHED);
         }
     }
 
@@ -240,6 +179,80 @@ public class SlideshowFragment extends Fragment implements IOpensJson {
 
         }
     }
+
+
+    private void runPathfinder(){
+        if (!ma.offline) {
+            String fromstr = actv.getText().toString();
+            String tostr = actv1.getText().toString();
+            int from = 0, to = 0;
+            ArrayList points = new ArrayList();
+
+            for (dot d : dots) {
+                if (d.name != null) {
+                    if (d.name.equals(fromstr)) {
+                        from = d.id;
+                    }
+                    if (d.name.equals(tostr)) {
+                        to = d.id;
+                    }
+                }
+            }
+
+            int[] way = findaway(from - 1, to - 1);
+            if (way != null) {
+                String wayStr = "";
+                if (from == to) {//Никуда не идём
+                    points.add(dots.get(from - 1).x - 3);
+                    points.add(dots.get(from - 1).y - 3);
+                    points.add(dots.get(from - 1).x + 3);
+                    points.add(dots.get(from - 1).y - 3);
+                    points.add(dots.get(from - 1).x + 3);
+                    points.add(dots.get(from - 1).y + 3);
+                    points.add(dots.get(from - 1).x - 3);
+                    points.add(dots.get(from - 1).y + 3);
+                    Log.d("Pathfinder", "Стоим на месте!");
+                } else {
+                    if (from - 1 == 0) {//Если стартуем с проходной, обраб. отдельно
+                        Log.d("Pathfinder", "" + dots.get(from - 1));
+                        wayStr += dots.get(from - 1) + ">";
+                        points.add(dots.get(from - 1).x);
+                        points.add(dots.get(from - 1).y);
+                    }
+                    for (int j = 0; j < way.length; j++) {//Проходим по пути
+                        if (way[j] > 0) {
+                            Log.d("Pathfinder", "" + dots.get(way[j]));
+                            wayStr += dots.get(way[j]) + ">";
+                            points.add(dots.get(way[j]).x);
+                            points.add(dots.get(way[j]).y);
+                        }
+                    }
+                    Log.d("Pathfinder", "" + dots.get(to - 1));
+                    points.add(dots.get(to - 1).x);//Добавляем последнюю точку
+                    points.add(dots.get(to - 1).y);
+                    wayStr += dots.get(to - 1);
+                    textView.setText(wayStr);
+
+
+                }
+                float[] floatArray = new float[points.size()];
+                for (int index = 0; index < points.size(); index++) {
+                    floatArray[index] = (int) points.get(index);
+                }
+                gfx.MyInvalidate(floatArray);
+                ma.hideKeyboard();
+            } else {
+                AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
+                builder1.setMessage("Неверно указана начальная и/или конечная точка!")
+                        .setTitle("Ошибка!")
+                        .setPositiveButton("ОК", null);
+
+                AlertDialog dialog1 = builder1.create();
+                dialog1.show();
+            }
+        }
+    }
+
 
     private int [] findaway(int from, int to){
         Log.d("Pathfinder", "from = "+from+" , to = "+to);

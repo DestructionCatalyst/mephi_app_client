@@ -23,9 +23,10 @@ import androidx.lifecycle.ViewModelProviders;
 
 import com.example.mephi_app.MainActivity;
 import com.example.mephi_app.R;
-import com.example.mephi_app.ui.IOpensJson;
-import com.example.mephi_app.ui.JSONHelper;
-import com.example.mephi_app.ui.NetworkTask;
+import com.example.mephi_app.IOpensJson;
+import com.example.mephi_app.JSONHelper;
+import com.example.mephi_app.NetworkTask;
+import com.example.mephi_app.ui.LoadErrorMessage;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -37,12 +38,13 @@ public class SendFragment extends Fragment implements IOpensJson {
 
     private final String lnk="http://192.168.1.7:3000/home/getqr?nam=";
     private final String lnkpost = "getqr?nam=";
+    static final String ACTION_SCAN = "com.google.zxing.client.android.SCAN";
 
     private MainActivity ma;
     private static Button butt;
-
     private static WebView wv;
     private static TextView tv;
+    private LoadErrorMessage lem;
 
     private String contents;
     private qr info;
@@ -70,9 +72,11 @@ public class SendFragment extends Fragment implements IOpensJson {
 
         wv = (WebView) root.findViewById(R.id.qr_view);
         tv = (TextView) root.findViewById(R.id.textView5);
+        lem = root.findViewById(R.id.lem_qr);
+
         return root;
     }
-    static final String ACTION_SCAN = "com.google.zxing.client.android.SCAN";
+
 
 
 
@@ -136,6 +140,8 @@ public class SendFragment extends Fragment implements IOpensJson {
                     dialog1.show();
                     e.printStackTrace();
                 }
+
+                lem.changeStatus(LoadErrorMessage.LOAD_PROGRESS);
                 NetworkTask task1 = new NetworkTask(this);
                 Log.d("Connection", "URL: ma.lnkbase+lnkpost+prefix");
                 task1.execute(ma.lnkbase+lnkpost+prefix);
@@ -144,7 +150,7 @@ public class SendFragment extends Fragment implements IOpensJson {
         }
     }
 
-
+    @Override
     public void open(String jsonStr){
         JSONHelper helper1 = new JSONHelper(this,new QrJSONHelper());
         helper1.execute(jsonStr);
@@ -153,6 +159,7 @@ public class SendFragment extends Fragment implements IOpensJson {
 
     @Override
     public void swear(String swearing) {
+        lem.changeStatus(LoadErrorMessage.LOAD_ERROR);
         String fullSwearing = "Ошибка открытия QR-кода. "+swearing;
         Log.d("Connection", fullSwearing);
         AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
@@ -178,6 +185,7 @@ public class SendFragment extends Fragment implements IOpensJson {
             tv.setVisibility(View.VISIBLE);
             tv.setText("Данный QR-код не является QR-кодом аудитории. Его содержимое:\n"+contents);
         }
+        lem.changeStatus(LoadErrorMessage.LOAD_FINISHED);
     }
 
     public static void closeQR(){

@@ -42,6 +42,13 @@
             android:textColor="@android:color/secondary_text_light" />
     </LinearLayout>
 
+    <com.example.mephi_app.ui.LoadErrorMessage
+        android:id="@+id/lem_news"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="3dp"
+        />
+
     <ListView
         android:id="@+id/listView"
         android:layout_width="match_parent"

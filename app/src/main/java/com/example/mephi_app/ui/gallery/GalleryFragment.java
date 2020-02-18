@@ -21,9 +21,10 @@ import androidx.lifecycle.ViewModelProviders;
 
 import com.example.mephi_app.MainActivity;
 import com.example.mephi_app.R;
-import com.example.mephi_app.ui.IOpensJson;
-import com.example.mephi_app.ui.JSONHelper;
-import com.example.mephi_app.ui.NetworkTask;
+import com.example.mephi_app.IOpensJson;
+import com.example.mephi_app.JSONHelper;
+import com.example.mephi_app.NetworkTask;
+import com.example.mephi_app.ui.LoadErrorMessage;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -47,6 +48,7 @@ public class GalleryFragment extends Fragment implements IOpensJson{
     public static WebView wv;
     public static ListView listView;
     Switch swtch;
+    LoadErrorMessage lem;
 
     private GalleryViewModel galleryViewModel;
 
@@ -70,7 +72,6 @@ public class GalleryFragment extends Fragment implements IOpensJson{
         swtch=(Switch) root.findViewById(R.id.switch1);
         if (swtch != null) {
             swtch.setOnCheckedChangeListener(new Switch.OnCheckedChangeListener(){
-
                     @Override
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                         refresh(0);
@@ -81,15 +82,15 @@ public class GalleryFragment extends Fragment implements IOpensJson{
         listView = (ListView) root.findViewById(R.id.list);
         ll = (LinearLayout) root.findViewById(R.id.linlay);
         wv = (WebView) root.findViewById(R.id.webview);
+        lem = root.findViewById(R.id.lem_reminders);
 
+        lem.changeStatus(LoadErrorMessage.LOAD_PROGRESS);
         NetworkTask task1 = new NetworkTask(this);
         task1.execute(ma.lnkbase+lnkpost);
 
         Log.d("Link",ma.lnkbase+lnkpost);
 
         return root;
-
-
     }
 
     public void open(String jsonStr){//IOpensJson
@@ -103,12 +104,48 @@ public class GalleryFragment extends Fragment implements IOpensJson{
     public void swear(String swearing) {//IOpensJson
         String fullSwearing = "Ошибка открытия памятки первокурсника. "+swearing;
         Log.d("Connection", fullSwearing);
+        lem.changeStatus(LoadErrorMessage.LOAD_ERROR);
         AlertDialog.Builder builder1 = new AlertDialog.Builder(getActivity());
         builder1.setMessage(fullSwearing)
                 .setTitle("Ошибка!")
                 .setPositiveButton("OK",null);
         AlertDialog dialog1 = builder1.create();
         dialog1.show();
+    }
+
+    @Override
+    public void displayJson(ArrayList reminders){//IOpensJson
+        this.reminders = reminders;
+        try {
+            FileInputStream fin = ma.openFileInput(FILE_NAME);
+            byte [] b = new byte[fin.available()];
+            fin.read(b);
+            String read = new String (b);
+            String [] tmp= read.split("~");
+            int id = 0;
+            ArrayList ids = new ArrayList();
+            for (String s : tmp) {
+                if (!s.equals("")) id = Integer.parseInt(s);
+                ids.add(id);
+            }
+
+            for (reminder cur:this.reminders) {
+                if (ids.contains(cur.id)){this.reminders.get(this.reminders.indexOf(cur)).check = true;
+                }
+            }
+            refresh(0);
+            fin.close();
+        }
+        catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(ma, "Ошибка загрузки данных!", Toast.LENGTH_SHORT).show();
+        }
+        adapter = new MyAdapter(this.getActivity(), this, this.reminders);
+        listView.setAdapter(adapter);
+        lem.changeStatus(LoadErrorMessage.LOAD_FINISHED);
     }
 
     void refresh(int callType){
@@ -179,39 +216,4 @@ public class GalleryFragment extends Fragment implements IOpensJson{
         else return false;
     }
 
-
-
-    @Override
-    public void displayJson(ArrayList reminders){//IOpensJson
-        this.reminders = reminders;
-        try {
-            FileInputStream fin = ma.openFileInput(FILE_NAME);
-            byte [] b = new byte[fin.available()];
-            fin.read(b);
-            String read = new String (b);
-            String [] tmp= read.split("~");
-            int id = 0;
-            ArrayList ids = new ArrayList();
-            for (String s : tmp) {
-                if (!s.equals("")) id = Integer.parseInt(s);
-                ids.add(id);
-            }
-
-            for (reminder cur:this.reminders) {
-                if (ids.contains(cur.id)){this.reminders.get(this.reminders.indexOf(cur)).check = true;
-                }
-            }
-            refresh(0);
-            fin.close();
-        }
-        catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-            Toast.makeText(ma, "Ошибка загрузки данных!", Toast.LENGTH_SHORT).show();
-        }
-        adapter = new MyAdapter(this.getActivity(), this, this.reminders);
-        listView.setAdapter(adapter);
-    }
 }
